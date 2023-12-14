@@ -19,22 +19,18 @@ def create_regions(multiworld: MultiWorld, player: int):
     # Set up locations
 
     for item_id in items:
-        regions["Summoner's Rift"].locations.append(items[item_id])
+        regions["Summoner's Rift"].locations.append("Win with " + str(items[item_id]))
     regions["Summoner's Rift"].locations.append("Starting Item 1")
     regions["Summoner's Rift"].locations.append("Starting Item 2")
     regions["Summoner's Rift"].locations.append("Starting Item 3")
     regions["Summoner's Rift"].locations.append("Starting Item 4")
     regions["Summoner's Rift"].locations.append("Starting Item 5")
     regions["Summoner's Rift"].locations.append("Starting Item 6")
-    regions["Summoner's Rift"].locations.append("Starting Item 7")
-    regions["Summoner's Rift"].locations.append("Starting Item 8")
-    regions["Summoner's Rift"].locations.append("Starting Item 9")
-    regions["Summoner's Rift"].locations.append("Starting Item 10")
     
     # Set up the regions correctly.
     for name, data in regions.items():
         multiworld.regions.append(create_region(multiworld, player, name, data))
-
+    
     multiworld.get_entrance("Summoner's Rift", player).connect(multiworld.get_region("Summoner's Rift", player))
 
 

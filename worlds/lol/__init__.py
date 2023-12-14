@@ -55,36 +55,9 @@ class LOLWorld(World):
     def create_items(self):
         item_pool: List[LOLItem] = []
         
-        starting_locations = list(get_locations_by_category("Starting").keys())
-        starting_items = get_items_by_category("Item", [])
-        starting_items = random.sample(list(starting_items.keys()),len(starting_locations))
-        i = 0
-        while i < len(starting_locations):
-            self.multiworld.get_location(starting_locations[i], self.player).place_locked_item(self.create_item(starting_items[i]))
-            i = i + 1
-        total_locations = len(self.multiworld.get_unfilled_locations(self.player))
         for name, data in item_table.items():
             quantity = data.max_quantity
-            
-            # Ignore filler, it will be added in a later stage.
-            if data.category not in ["Win"]:
-                continue
             item_pool += [self.create_item(name) for _ in range(0, quantity)]
-
-        # Fill any empty locations with filler items.
-        item_names = starting_items
-        attempts = 0
-        while len(item_pool) < total_locations:
-            item_name = self.get_filler_item_name()
-            if item_name not in item_names:
-                item_names.append(item_name)
-                item_pool.append(self.create_item(item_name))
-                attempts = 0
-            elif attempts >= 200:
-                item_names = []
-                attempts = 0
-            else:
-                attempts = attempts + 1
 
         self.multiworld.itempool += item_pool
 

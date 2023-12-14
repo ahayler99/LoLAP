@@ -14,3 +14,4 @@ item_data = requests.get(items_url).json()["data"]
 for item_id in item_data.keys():
     if "into" not in item_data[item_id].keys() and item_data[item_id]["maps"][str(map_id)] and item_data[item_id]["gold"]["purchasable"] and item_data[item_id]["gold"]["total"] > 1000:
         items[item_id] = item_data[item_id]["name"]
+

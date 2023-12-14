@@ -3,6 +3,8 @@ import os
 import sys
 import asyncio
 import shutil
+import requests
+import json
 
 import ModuleUpdate
 ModuleUpdate.update()
@@ -11,6 +13,76 @@ import Utils
 
 check_num = 0
 
+###Set up game communication path###
+if "localappdata" in os.environ:
+    game_communication_path = os.path.expandvars(r"%localappdata%/LOLAP")
+else:
+    game_communication_path = os.path.expandvars(r"$HOME/LOLAP")
+if not os.path.exists(game_communication_path):
+    os.makedirs(game_communication_path)
+
+
+###API FUNCTIONS###
+def get_header(api_key):
+    return {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Accept-Charset": "application/x-www-form-urlencoded; charset=UTF-8",
+            "Origin": "https://developer.riotgames.com",
+            "X-Riot-Token": api_key
+        }
+
+def get_puuid_by_summoner_name(summoner_name, api_key):
+    url = "https://na1.api.riotgames.com/lol/summoner/v4/summoners/by-name/" + str(summoner_name)
+    response = requests.get(url, headers=get_header(api_key))
+    return json.loads(response.text)["puuid"]
+
+def get_last_match_id_by_puuid(puuid, api_key):
+    url = "https://americas.api.riotgames.com/lol/match/v5/matches/by-puuid/" + str(puuid) + "/ids?start=0&count=1"
+    response = requests.get(url, headers=get_header(api_key))
+    return json.loads(response.text)[0]
+
+def get_match_info_by_match_id(match_id, api_key):
+    url = "https://americas.api.riotgames.com/lol/match/v5/matches/" + str(match_id)
+    response = requests.get(url, headers=get_header(api_key))
+    return json.loads(response.text)
+
+def get_item_ids_purchased(puuid, match_info):
+    item_ids = []
+    item_slots = ["item0", "item1", "item2", "item3", "item4", "item5", "item6"]
+    for participant in match_info["info"]["participants"]:
+        if participant["puuid"] == puuid:
+            for item_slot in item_slots:
+                if item_slot in participant.keys():
+                    item_ids.append(participant[item_slot])
+    return item_ids
+
+def won_match(puuid, match_info):
+    for participant in match_info["info"]["participants"]:
+        if participant["puuid"] == puuid:
+            return participant["win"]
+    return False
+
+def get_collected_item_ids():
+    item_ids = []
+    for root, dirs, files in os.walk(game_communication_path):
+        for file in files:
+            if str(file).startswith("AP"):
+                with open(os.path.join(game_communication_path, file), 'r') as f:
+                    item_id = int(f.readline())
+                    item_ids.append(item_id)
+                    f.close()
+    return item_ids
+
+def send_check(item_id):
+    with open(os.path.join(game_communication_path, "send" + str(5660000 + int(item_id))), 'w') as f:
+        f.close()
+        
+def send_victory():
+    with open(os.path.join(game_communication_path, "victory"), 'w') as f:
+        f.close()
+
+###Client###
 if __name__ == "__main__":
     Utils.init_logging("LOLClient", exception_logger="Client")
 
@@ -24,9 +96,80 @@ def check_stdin() -> None:
         print("WARNING: Console input is not routed reliably on Windows, use the GUI instead.")
 
 class LOLClientCommandProcessor(ClientCommandProcessor):
-    def _cmd_test(self):
-        """Test"""
-        self.output(f"Test")
+    api_key = ""
+    player_puuid = ""
+    
+    def _cmd_set_api_key(self, api_key):
+        """Set the API Key for RIOT API"""
+        self.api_key = api_key
+        self.output(f"API Key Set")
+    
+    def _cmd_set_summoner_name(self, summoner_name):
+        """Set the PUUID from Riot API using the passed Summoner Name"""
+        if self.api_key != "":
+            self.player_puuid = get_puuid_by_summoner_name(summoner_name, self.api_key)
+            self.output(f"PUUID Set")
+        else:
+            self.output(f"Please set your API Key")
+    
+    def _cmd_check_last_match(self):
+        """Checks the last match for victory with unlocked items"""
+        new_locations = []
+        if self.api_key != "" and self.player_puuid != "":
+            unlocked_item_ids = get_collected_item_ids()
+            if len(unlocked_item_ids) > 0:
+                last_match_id = get_last_match_id_by_puuid(self.player_puuid, self.api_key)
+                last_match_info = get_match_info_by_match_id(last_match_id, self.api_key)
+                if won_match(self.player_puuid, last_match_info):
+                    item_ids_purchased = get_item_ids_purchased(self.player_puuid, last_match_info)
+                    for item_id in item_ids_purchased:
+                        if int(item_id) in unlocked_item_ids:
+                            new_locations.append(int(item_id))
+                else:
+                    self.output(f"Last Match Resulted in a Loss...")
+            else:
+                self.output(f"You have no items!")
+        else:
+            self.output(f"Please set your API Key and Summoner Name")
+        if len(new_locations) > 0:
+            for location in new_locations:
+                send_check(location)
+        else:
+            self.output(f"No new valid items")
+    
+    def _cmd_receive_starting_items(self):
+        """When you're ready to start your run, this receives your starting items"""
+        starting_location_ids = [566_0001, 566_0002, 566_0003, 566_0004, 566_0005, 566_0006]
+        for location_id in starting_location_ids:
+            with open(os.path.join(game_communication_path, "send" + str(location_id)), 'w') as f:
+                f.close()
+        self.output("Items Received")
+    
+    def _cmd_check_for_victory(self):
+        victory_item_ids = [5650001, 5650002, 5650003, 5650004, 5650005, 5650006]
+        victory_items_collected = 0
+        item_ids = get_collected_item_ids()
+        for item_id in item_ids:
+            if int(item_id) in victory_item_ids:
+                victory_items_collected = victory_items_collected + 1
+        if victory_items_collected >= len(victory_item_ids):
+            send_victory()
+        else:
+            self.output("You have " + str(victory_items_collected) + " out of " + str(len(victory_item_ids)) + " victory items collected.")
+    
+    def _cmd_print_item_ids(self):
+        """Prints currently collected item ids"""
+        item_ids = get_collected_item_ids()
+        for item_id in item_ids:
+            self.output(item_id)
+    
+    def _cmd_print_puuid(self):
+        """Prints the defined PUUID"""
+        self.output(self.puuid)
+    
+    def _cmd_print_api_key(self):
+        """Prints the defined API Key"""
+        self.output(self.api_key)
 
 
 class LOLContext(CommonContext):
@@ -135,7 +278,7 @@ class LOLContext(CommonContext):
 
 
 async def game_watcher(ctx: LOLContext):
-    from worlds.LOL.Locations import lookup_id_to_name
+    from worlds.lol.Locations import lookup_id_to_name
     while not ctx.exit_event.is_set():
         if ctx.syncing == True:
             sync_msg = [{'cmd': 'Sync'}]
