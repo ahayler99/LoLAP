@@ -123,7 +123,7 @@ class LOLClientCommandProcessor(ClientCommandProcessor):
                 if won_match(self.player_puuid, last_match_info):
                     item_ids_purchased = get_item_ids_purchased(self.player_puuid, last_match_info)
                     for item_id in item_ids_purchased:
-                        if int(item_id) in unlocked_item_ids:
+                        if int(item_id) + 5650000 in unlocked_item_ids:
                             new_locations.append(int(item_id))
                 else:
                     self.output(f"Last Match Resulted in a Loss...")
@@ -165,7 +165,7 @@ class LOLClientCommandProcessor(ClientCommandProcessor):
     
     def _cmd_print_puuid(self):
         """Prints the defined PUUID"""
-        self.output(self.puuid)
+        self.output(self.player_puuid)
     
     def _cmd_print_api_key(self):
         """Prints the defined API Key"""
