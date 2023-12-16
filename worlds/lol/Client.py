@@ -32,18 +32,18 @@ def get_header(api_key):
             "X-Riot-Token": api_key
         }
 
-def get_puuid_by_summoner_name(summoner_name, api_key):
-    url = "https://na1.api.riotgames.com/lol/summoner/v4/summoners/by-name/" + str(summoner_name)
+def get_puuid_by_summoner_name(summoner_name, api_key, region_short):
+    url = "https://" + region_short + ".api.riotgames.com/lol/summoner/v4/summoners/by-name/" + str(summoner_name)
     response = requests.get(url, headers=get_header(api_key))
     return json.loads(response.text)["puuid"]
 
-def get_last_match_id_by_puuid(puuid, api_key):
-    url = "https://americas.api.riotgames.com/lol/match/v5/matches/by-puuid/" + str(puuid) + "/ids?start=0&count=1"
+def get_last_match_id_by_puuid(puuid, api_key, region_long):
+    url = "https://" + region_long + ".api.riotgames.com/lol/match/v5/matches/by-puuid/" + str(puuid) + "/ids?start=0&count=1"
     response = requests.get(url, headers=get_header(api_key))
     return json.loads(response.text)[0]
 
-def get_match_info_by_match_id(match_id, api_key):
-    url = "https://americas.api.riotgames.com/lol/match/v5/matches/" + str(match_id)
+def get_match_info_by_match_id(match_id, api_key, region_long):
+    url = "https://" + region_long + ".api.riotgames.com/lol/match/v5/matches/" + str(match_id)
     response = requests.get(url, headers=get_header(api_key))
     return json.loads(response.text)
 
@@ -98,6 +98,11 @@ def check_stdin() -> None:
 class LOLClientCommandProcessor(ClientCommandProcessor):
     api_key = ""
     player_puuid = ""
+    region_short = "na1"
+    region_long = "americas"
+    
+    region_short_options = ["br1"     , "la1"     , "la2"     , "na1"     , "jp1" , "kr"  , "tw2" , "eun1"  , "euw1"  , "ru"    , "tr1"   , "oc1", "ph2", "sg" , "th2", "vn2"]
+    region_long_options =  ["americas", "americas", "americas", "americas", "asia", "asia", "asia", "europe", "europe", "europe", "europe", "sea", "sea", "sea", "sea", "sea"]
     
     def _cmd_set_api_key(self, api_key):
         """Set the API Key for RIOT API"""
@@ -107,10 +112,23 @@ class LOLClientCommandProcessor(ClientCommandProcessor):
     def _cmd_set_summoner_name(self, summoner_name):
         """Set the PUUID from Riot API using the passed Summoner Name"""
         if self.api_key != "":
-            self.player_puuid = get_puuid_by_summoner_name(summoner_name, self.api_key)
+            self.player_puuid = get_puuid_by_summoner_name(summoner_name, self.api_key, self.region_short)
             self.output(f"PUUID Set")
         else:
             self.output(f"Please set your API Key")
+    
+    def _cmd_set_region(self, region_number):
+        """Sets the region number.  Default is NA"""
+        if region_number.isnumeric():
+            region_number = int(region_number)
+            if region_number >= 0 and region_number < len(self.region_short_options):
+                self.region_short = self.region_short_options[region_number]
+                self.region_long = self.region_long_options[region_number]
+                self.output(f"Region set: " + self.region_short + " - " + self.region_long)
+            else:
+                self.output(f"Invalid int.  Please choose a valid option.  View options by running /print_region_options")
+        else:
+            self.output(f"Invalid integer passed.  Please pass a valid option.  View options by running /print_region_options")
     
     def _cmd_check_last_match(self):
         """Checks the last match for victory with unlocked items"""
@@ -118,8 +136,8 @@ class LOLClientCommandProcessor(ClientCommandProcessor):
         if self.api_key != "" and self.player_puuid != "":
             unlocked_item_ids = get_collected_item_ids()
             if len(unlocked_item_ids) > 0:
-                last_match_id = get_last_match_id_by_puuid(self.player_puuid, self.api_key)
-                last_match_info = get_match_info_by_match_id(last_match_id, self.api_key)
+                last_match_id = get_last_match_id_by_puuid(self.player_puuid, self.api_key, self.region_long)
+                last_match_info = get_match_info_by_match_id(last_match_id, self.api_key, self.region_long)
                 if won_match(self.player_puuid, last_match_info):
                     item_ids_purchased = get_item_ids_purchased(self.player_puuid, last_match_info)
                     for item_id in item_ids_purchased:
@@ -170,7 +188,17 @@ class LOLClientCommandProcessor(ClientCommandProcessor):
     def _cmd_print_api_key(self):
         """Prints the defined API Key"""
         self.output(self.api_key)
-
+    
+    def _cmd_print_region(self):
+        """Prints currently selected region."""
+        self.output(f"Region: " + self.region_short + " - " + self.region_long)
+    
+    def _cmd_print_region_options(self):
+        """Prints all region options"""
+        i = 0
+        while i < len(self.region_short_options):
+            self.output(f"Region " + str(i) + ": " + self.region_short_options[i] + " - " + self.region_long_options[i])
+            i = i + 1
 
 class LOLContext(CommonContext):
     command_processor: int = LOLClientCommandProcessor
