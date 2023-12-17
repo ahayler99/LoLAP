@@ -1,5 +1,5 @@
 from typing import Dict, NamedTuple, Optional
-from .Data import items
+from .Data import sr_items, aram_items, arena_items
 import typing
 
 
@@ -25,14 +25,18 @@ def get_locations_by_category(category: str) -> Dict[str, LOLLocationData]:
 
 
 location_table: Dict[str, LOLLocationData] = {}
-for item_id in items:
-    location_table["Win with " + str(items[item_id])]  = LOLLocationData("Progression", 566_0000 + int(item_id))
-location_table["Starting Item 1"]   = LOLLocationData("Starting"   , 566_0001)
-location_table["Starting Item 2"]   = LOLLocationData("Starting"   , 566_0002)
-location_table["Starting Item 3"]   = LOLLocationData("Starting"   , 566_0003)
-location_table["Starting Item 4"]   = LOLLocationData("Starting"   , 566_0004)
-location_table["Starting Item 5"]   = LOLLocationData("Starting"   , 566_0005)
-location_table["Starting Item 6"]   = LOLLocationData("Starting"   , 566_0006)
+for item_id in sr_items:
+    location_table["Win Summoners Rift with " + str(sr_items[item_id])]  = LOLLocationData("GameMode(Summoners Rift)", 566_000000 + int(item_id))
+for item_id in aram_items:
+    location_table["Win ARAM with " + str(aram_items[item_id])]  = LOLLocationData("GameMode(Aram)", 566_000000 + int(item_id))
+for item_id in arena_items:
+    location_table["Win Arena with " + str(arena_items[item_id])]  = LOLLocationData("GameMode(Arena)", 566_000000 + int(item_id))
+location_table["Starting Item 1"]   = LOLLocationData("Starting"   , 566_000001)
+location_table["Starting Item 2"]   = LOLLocationData("Starting"   , 566_000002)
+location_table["Starting Item 3"]   = LOLLocationData("Starting"   , 566_000003)
+location_table["Starting Item 4"]   = LOLLocationData("Starting"   , 566_000004)
+location_table["Starting Item 5"]   = LOLLocationData("Starting"   , 566_000005)
+location_table["Starting Item 6"]   = LOLLocationData("Starting"   , 566_000006)
 
 event_location_table: Dict[str, LOLLocationData] = {
 }

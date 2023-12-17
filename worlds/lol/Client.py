@@ -75,7 +75,7 @@ def get_collected_item_ids():
     return item_ids
 
 def send_check(item_id):
-    with open(os.path.join(game_communication_path, "send" + str(5660000 + int(item_id))), 'w') as f:
+    with open(os.path.join(game_communication_path, "send" + str(566000000 + int(item_id))), 'w') as f:
         f.close()
         
 def send_victory():
@@ -141,7 +141,7 @@ class LOLClientCommandProcessor(ClientCommandProcessor):
                 if won_match(self.player_puuid, last_match_info):
                     item_ids_purchased = get_item_ids_purchased(self.player_puuid, last_match_info)
                     for item_id in item_ids_purchased:
-                        if int(item_id) + 5650000 in unlocked_item_ids:
+                        if int(item_id) + 565000000 in unlocked_item_ids:
                             new_locations.append(int(item_id))
                 else:
                     self.output(f"Last Match Resulted in a Loss...")
@@ -157,14 +157,14 @@ class LOLClientCommandProcessor(ClientCommandProcessor):
     
     def _cmd_receive_starting_items(self):
         """When you're ready to start your run, this receives your starting items"""
-        starting_location_ids = [566_0001, 566_0002, 566_0003, 566_0004, 566_0005, 566_0006]
+        starting_location_ids = [566_000001, 566_000002, 566_000003, 566_000004, 566_000005, 566_000006]
         for location_id in starting_location_ids:
             with open(os.path.join(game_communication_path, "send" + str(location_id)), 'w') as f:
                 f.close()
         self.output("Items Received")
     
     def _cmd_check_for_victory(self):
-        victory_item_ids = [5650001, 5650002, 5650003, 5650004, 5650005, 5650006]
+        victory_item_ids = [565000001, 565000002, 565000003, 565000004, 565000005, 565000006]
         victory_items_collected = 0
         item_ids = get_collected_item_ids()
         for item_id in item_ids:

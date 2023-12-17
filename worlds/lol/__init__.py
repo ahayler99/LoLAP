@@ -55,8 +55,10 @@ class LOLWorld(World):
     def create_items(self):
         item_pool: List[LOLItem] = []
         
-        for name, data in item_table.items():
-            quantity = data.max_quantity
+        game_item_table = get_items_by_category(str(self.get_setting("game_mode")), [])
+        game_item_table.update(get_items_by_category("Victory", []))
+        for name in game_item_table.keys():
+            quantity = 1
             item_pool += [self.create_item(name) for _ in range(0, quantity)]
 
         self.multiworld.itempool += item_pool
@@ -77,7 +79,7 @@ class LOLWorld(World):
         return LOLItem(name, data.classification, data.code, self.player)
 
     def set_rules(self):
-        set_rules(self.multiworld, self.player)
+        set_rules(self.multiworld, self.player, str(self.get_setting("game_mode")))
 
     def create_regions(self):
-        create_regions(self.multiworld, self.player)
+        create_regions(self.multiworld, self.player, str(self.get_setting("game_mode")))

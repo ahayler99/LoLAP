@@ -2,7 +2,7 @@ from typing import Dict, List, NamedTuple, Optional
 
 from BaseClasses import MultiWorld, Region, Entrance
 from .Locations import LOLLocation, location_table, get_locations_by_category
-from .Data import items
+from .Data import sr_items, aram_items, arena_items
 
 
 class LOLRegionData(NamedTuple):
@@ -10,28 +10,35 @@ class LOLRegionData(NamedTuple):
     region_exits: Optional[List[str]]
 
 
-def create_regions(multiworld: MultiWorld, player: int):
+def create_regions(multiworld: MultiWorld, player: int, game_mode: str):
     regions: Dict[str, LOLRegionData] = {
-        "Menu":     LOLRegionData(None, ["Summoner's Rift"]),
-        "Summoner's Rift":  LOLRegionData([], []),
+        "Menu":     LOLRegionData(None, ["Match"]),
+        "Match":  LOLRegionData([], []),
     }
 
     # Set up locations
-
-    for item_id in items:
-        regions["Summoner's Rift"].locations.append("Win with " + str(items[item_id]))
-    regions["Summoner's Rift"].locations.append("Starting Item 1")
-    regions["Summoner's Rift"].locations.append("Starting Item 2")
-    regions["Summoner's Rift"].locations.append("Starting Item 3")
-    regions["Summoner's Rift"].locations.append("Starting Item 4")
-    regions["Summoner's Rift"].locations.append("Starting Item 5")
-    regions["Summoner's Rift"].locations.append("Starting Item 6")
+    
+    if game_mode == "GameMode(Summoners Rift)":
+        for item_id in sr_items:
+            regions["Match"].locations.append("Win Summoners Rift with " + str(sr_items[item_id]))
+    if game_mode == "GameMode(Aram)":
+        for item_id in aram_items:
+            regions["Match"].locations.append("Win ARAM with " + str(aram_items[item_id]))
+    if game_mode == "GameMode(Arena)":
+        for item_id in arena_items:
+            regions["Match"].locations.append("Win Arena with " + str(arena_items[item_id]))
+    regions["Match"].locations.append("Starting Item 1")
+    regions["Match"].locations.append("Starting Item 2")
+    regions["Match"].locations.append("Starting Item 3")
+    regions["Match"].locations.append("Starting Item 4")
+    regions["Match"].locations.append("Starting Item 5")
+    regions["Match"].locations.append("Starting Item 6")
     
     # Set up the regions correctly.
     for name, data in regions.items():
         multiworld.regions.append(create_region(multiworld, player, name, data))
     
-    multiworld.get_entrance("Summoner's Rift", player).connect(multiworld.get_region("Summoner's Rift", player))
+    multiworld.get_entrance("Match", player).connect(multiworld.get_region("Match", player))
 
 
 def create_region(multiworld: MultiWorld, player: int, name: str, data: LOLRegionData):
