@@ -74,8 +74,16 @@ def get_collected_item_ids():
                     f.close()
     return item_ids
 
+def get_game_mode_offset(game_mode):
+    if game_mode == "ARAM":
+        return 5652000000
+    elif game_mode == "ARENA":
+        return 5653000000
+    else:
+        return 5651000000
+
 def send_check(item_id):
-    with open(os.path.join(game_communication_path, "send" + str(566000000 + int(item_id))), 'w') as f:
+    with open(os.path.join(game_communication_path, "send" + str(item_id)), 'w') as f:
         f.close()
         
 def send_victory():
@@ -138,10 +146,11 @@ class LOLClientCommandProcessor(ClientCommandProcessor):
             if len(unlocked_item_ids) > 0:
                 last_match_id = get_last_match_id_by_puuid(self.player_puuid, self.api_key, self.region_long)
                 last_match_info = get_match_info_by_match_id(last_match_id, self.api_key, self.region_long)
+                game_mode_offset = get_game_mode_offset(last_match_info["info"]["gameMode"])
                 if won_match(self.player_puuid, last_match_info):
                     item_ids_purchased = get_item_ids_purchased(self.player_puuid, last_match_info)
                     for item_id in item_ids_purchased:
-                        if int(item_id) + 565000000 in unlocked_item_ids:
+                        if int(item_id) + game_mode_offset in unlocked_item_ids:
                             new_locations.append(int(item_id))
                 else:
                     self.output(f"Last Match Resulted in a Loss...")
@@ -157,14 +166,14 @@ class LOLClientCommandProcessor(ClientCommandProcessor):
     
     def _cmd_receive_starting_items(self):
         """When you're ready to start your run, this receives your starting items"""
-        starting_location_ids = [566_000001, 566_000002, 566_000003, 566_000004, 566_000005, 566_000006]
+        starting_location_ids = [5660_000001, 5660_000002, 5660_000003, 5660_000004, 5660_000005, 5660_000006]
         for location_id in starting_location_ids:
             with open(os.path.join(game_communication_path, "send" + str(location_id)), 'w') as f:
                 f.close()
         self.output("Items Received")
     
     def _cmd_check_for_victory(self):
-        victory_item_ids = [565000001, 565000002, 565000003, 565000004, 565000005, 565000006]
+        victory_item_ids = [5650000001, 5650000002, 5650000003, 5650000004, 5650000005, 5650000006]
         victory_items_collected = 0
         item_ids = get_collected_item_ids()
         for item_id in item_ids:

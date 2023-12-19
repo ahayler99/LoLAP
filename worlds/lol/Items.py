@@ -28,17 +28,17 @@ def get_items_by_category(category: str, disclude: list) -> Dict[str, LOLItemDat
 
 item_table: Dict[str, LOLItemData] = {}
 for item_id in sr_items:
-    item_table["SR " + sr_items[item_id]] = LOLItemData("GameMode(Summoners Rift)", code = 565_000000 + int(item_id), classification = ItemClassification.progression, max_quantity = 1, weight = 1)
+    item_table["SR " + sr_items[item_id]] = LOLItemData("GameMode(Summoners Rift)", code = 5651_000000 + int(item_id), classification = ItemClassification.progression, max_quantity = 1, weight = 1)
 for item_id in aram_items:
-    item_table["ARAM " + aram_items[item_id]] = LOLItemData("GameMode(Aram)", code = 565_000000 + int(item_id), classification = ItemClassification.progression, max_quantity = 1, weight = 1)
+    item_table["ARAM " + aram_items[item_id]] = LOLItemData("GameMode(Aram)", code = 5652_000000 + int(item_id), classification = ItemClassification.progression, max_quantity = 1, weight = 1)
 for item_id in arena_items:
-    item_table["ARENA " + arena_items[item_id]] = LOLItemData("GameMode(Arena)", code = 565_000000 + int(item_id), classification = ItemClassification.progression, max_quantity = 1, weight = 1)
-item_table["Bronze Rank"]              = LOLItemData("Victory", code = 565_000001, classification = ItemClassification.progression, max_quantity = 1, weight = 1)
-item_table["Silver Rank"]              = LOLItemData("Victory", code = 565_000002, classification = ItemClassification.progression, max_quantity = 1, weight = 1)
-item_table["Gold Rank"]                = LOLItemData("Victory", code = 565_000003, classification = ItemClassification.progression, max_quantity = 1, weight = 1)
-item_table["Platinum Rank"]            = LOLItemData("Victory", code = 565_000004, classification = ItemClassification.progression, max_quantity = 1, weight = 1)
-item_table["Emerald Rank"]             = LOLItemData("Victory", code = 565_000005, classification = ItemClassification.progression, max_quantity = 1, weight = 1)
-item_table["Diamond Rank"]             = LOLItemData("Victory", code = 565_000006, classification = ItemClassification.progression, max_quantity = 1, weight = 1)
+    item_table["ARENA " + arena_items[item_id]] = LOLItemData("GameMode(Arena)", code = 5653_000000 + int(item_id), classification = ItemClassification.progression, max_quantity = 1, weight = 1)
+item_table["Bronze Rank"]              = LOLItemData("Victory", code = 5650_000001, classification = ItemClassification.progression, max_quantity = 1, weight = 1)
+item_table["Silver Rank"]              = LOLItemData("Victory", code = 5650_000002, classification = ItemClassification.progression, max_quantity = 1, weight = 1)
+item_table["Gold Rank"]                = LOLItemData("Victory", code = 5650_000003, classification = ItemClassification.progression, max_quantity = 1, weight = 1)
+item_table["Platinum Rank"]            = LOLItemData("Victory", code = 5650_000004, classification = ItemClassification.progression, max_quantity = 1, weight = 1)
+item_table["Emerald Rank"]             = LOLItemData("Victory", code = 5650_000005, classification = ItemClassification.progression, max_quantity = 1, weight = 1)
+item_table["Diamond Rank"]             = LOLItemData("Victory", code = 5650_000006, classification = ItemClassification.progression, max_quantity = 1, weight = 1)
 
 
 event_item_table: Dict[str, LOLItemData] = {
