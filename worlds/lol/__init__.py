@@ -54,7 +54,6 @@ class LOLWorld(World):
 
     def create_items(self):
         item_pool: List[LOLItem] = []
-        
         game_item_table = get_items_by_category(str(self.get_setting("game_mode")), [])
         game_item_table.update(get_items_by_category("Victory", []))
         for name in game_item_table.keys():

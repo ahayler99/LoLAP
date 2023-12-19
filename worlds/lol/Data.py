@@ -25,3 +25,28 @@ for item_id in item_data.keys():
             aram_items[item_id] = item_data[item_id]["name"]
         if item_data[item_id]["maps"][str(arena_map_id)]:
             arena_items[item_id] = item_data[item_id]["name"]
+    
+    for item_id in item_data.keys():
+        if "specialRecipe" in item_data[item_id].keys():
+            if str(item_data[item_id]["specialRecipe"]) in sr_items.keys():
+                del sr_items[str(item_data[item_id]["specialRecipe"])]
+                sr_items[item_id] = item_data[item_id]["name"]
+            if str(item_data[item_id]["specialRecipe"]) in aram_items.keys():
+                del aram_items[str(item_data[item_id]["specialRecipe"])]
+                aram_items[item_id] = item_data[item_id]["name"]
+            if str(item_data[item_id]["specialRecipe"]) in arena_items.keys():
+                del arena_items[str(item_data[item_id]["specialRecipe"])]
+                arena_items[item_id] = item_data[item_id]["name"]
+
+    #Doing this twice for items that transform twice
+    for item_id in item_data.keys():
+        if "specialRecipe" in item_data[item_id].keys():
+            if str(item_data[item_id]["specialRecipe"]) in sr_items.keys():
+                del sr_items[str(item_data[item_id]["specialRecipe"])]
+                sr_items[item_id] = item_data[item_id]["name"]
+            if str(item_data[item_id]["specialRecipe"]) in aram_items.keys():
+                del aram_items[str(item_data[item_id]["specialRecipe"])]
+                aram_items[item_id] = item_data[item_id]["name"]
+            if str(item_data[item_id]["specialRecipe"]) in arena_items.keys():
+                del arena_items[str(item_data[item_id]["specialRecipe"])]
+                arena_items[item_id] = item_data[item_id]["name"]
