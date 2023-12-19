@@ -12,6 +12,16 @@ class GameMode(Choice):
     option_arena = 2
     default = 0
 
+class ItemNumber(Range):
+    """
+    How many items/locations should be included in the pool?
+    """
+    default = 30
+    range_start = 10
+    range_end = 60
+    display_name = "Number of Items"
+
 lol_options: Dict[str, type(Option)] = {
-    "game_mode": GameMode
+    "game_mode": GameMode,
+    "item_num": ItemNumber,
 }

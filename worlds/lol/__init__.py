@@ -41,6 +41,7 @@ class LOLWorld(World):
     data_version = 4
     required_client_version = (0, 3, 5)
     web = LOLWeb()
+    game_item_table = []
 
     item_name_to_id = {name: data.code for name, data in item_table.items()}
     location_name_to_id = {name: data.code for name, data in location_table.items()}
@@ -53,12 +54,10 @@ class LOLWorld(World):
         return {option_name: self.get_setting(option_name).value for option_name in lol_options}
 
     def create_items(self):
+        self.set_item_table()
         item_pool: List[LOLItem] = []
-        game_item_table = get_items_by_category(str(self.get_setting("game_mode")), [])
-        game_item_table.update(get_items_by_category("Victory", []))
-        for name in game_item_table.keys():
-            quantity = 1
-            item_pool += [self.create_item(name) for _ in range(0, quantity)]
+        for name in self.game_item_table:
+            item_pool += [self.create_item(name) for _ in range(0, 1)]
 
         self.multiworld.itempool += item_pool
 
@@ -78,7 +77,14 @@ class LOLWorld(World):
         return LOLItem(name, data.classification, data.code, self.player)
 
     def set_rules(self):
-        set_rules(self.multiworld, self.player, str(self.get_setting("game_mode")))
+        set_rules(self.multiworld, self.player, str(self.get_setting("game_mode")), self.game_item_table)
 
     def create_regions(self):
-        create_regions(self.multiworld, self.player, str(self.get_setting("game_mode")))
+        self.set_item_table()
+        create_regions(self.multiworld, self.player, str(self.get_setting("game_mode")), self.game_item_table)
+    
+    def set_item_table(self):
+        if len(self.game_item_table) == 0:
+            self.game_item_table = get_items_by_category(str(self.get_setting("game_mode")), []).keys()
+            self.game_item_table = random.sample(self.game_item_table, int(self.get_setting("item_num")))
+            self.game_item_table = self.game_item_table + list(get_items_by_category("Victory", []).keys())

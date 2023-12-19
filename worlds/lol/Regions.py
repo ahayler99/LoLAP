@@ -10,7 +10,7 @@ class LOLRegionData(NamedTuple):
     region_exits: Optional[List[str]]
 
 
-def create_regions(multiworld: MultiWorld, player: int, game_mode: str):
+def create_regions(multiworld: MultiWorld, player: int, game_mode: str, items: list[str]):
     regions: Dict[str, LOLRegionData] = {
         "Menu":     LOLRegionData(None, ["Match"]),
         "Match":  LOLRegionData([], []),
@@ -20,13 +20,16 @@ def create_regions(multiworld: MultiWorld, player: int, game_mode: str):
     
     if game_mode == "GameMode(Summoners Rift)":
         for item_id in sr_items:
-            regions["Match"].locations.append("Win Summoners Rift with " + str(sr_items[item_id]))
+            if "SR " + str(sr_items[item_id]) in items or len(items) == 0:
+                regions["Match"].locations.append("Win Summoners Rift with " + str(sr_items[item_id]))
     if game_mode == "GameMode(Aram)":
         for item_id in aram_items:
-            regions["Match"].locations.append("Win ARAM with " + str(aram_items[item_id]))
+            if "ARAM " + str(aram_items[item_id]) in items or len(items) == 0:
+                regions["Match"].locations.append("Win ARAM with " + str(aram_items[item_id]))
     if game_mode == "GameMode(Arena)":
         for item_id in arena_items:
-            regions["Match"].locations.append("Win Arena with " + str(arena_items[item_id]))
+            if "ARENA " + str(arena_items[item_id]) in items or len(items) == 0:
+                regions["Match"].locations.append("Win Arena with " + str(arena_items[item_id]))
     regions["Match"].locations.append("Starting Item 1")
     regions["Match"].locations.append("Starting Item 2")
     regions["Match"].locations.append("Starting Item 3")
