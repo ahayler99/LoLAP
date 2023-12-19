@@ -77,7 +77,7 @@ def get_collected_item_ids():
 def get_game_mode_offset(game_mode):
     if game_mode == "ARAM":
         return 5652000000
-    elif game_mode == "ARENA":
+    elif game_mode == "CHERRY":
         return 5653000000
     else:
         return 5651000000
