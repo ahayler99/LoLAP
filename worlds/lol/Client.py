@@ -151,7 +151,7 @@ class LOLClientCommandProcessor(ClientCommandProcessor):
                     item_ids_purchased = get_item_ids_purchased(self.player_puuid, last_match_info)
                     for item_id in item_ids_purchased:
                         if int(item_id) + game_mode_offset in unlocked_item_ids:
-                            new_locations.append(int(item_id))
+                            new_locations.append(int(item_id) + game_mode_offset + 10000000)
                 else:
                     self.output(f"Last Match Resulted in a Loss...")
             else:
