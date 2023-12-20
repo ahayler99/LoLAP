@@ -86,5 +86,5 @@ class LOLWorld(World):
     def set_item_table(self):
         if len(self.game_item_table) == 0:
             self.game_item_table = get_items_by_category(str(self.get_setting("game_mode")), []).keys()
-            self.game_item_table = random.sample(self.game_item_table, int(self.get_setting("item_num")))
+            self.game_item_table = random.sample(list(self.game_item_table), int(self.get_setting("item_num")))
             self.game_item_table = self.game_item_table + list(get_items_by_category("Victory", []).keys())
