@@ -35,7 +35,12 @@ def get_header(api_key):
 def get_puuid_by_summoner_name(summoner_name, api_key, region_short):
     url = "https://" + region_short + ".api.riotgames.com/lol/summoner/v4/summoners/by-name/" + str(summoner_name)
     response = requests.get(url, headers=get_header(api_key))
-    return json.loads(response.text)["puuid"]
+    if str(response) == "<Response [403]>":
+        return "Forbidden, check your API Key"
+    elif str(response) == "<Response [404]>":
+        return "Data not found.  Check your summoner name or configure your region."
+    else:
+        return json.loads(response.text)["puuid"]
 
 def get_last_match_id_by_puuid(puuid, api_key, region_long):
     url = "https://" + region_long + ".api.riotgames.com/lol/match/v5/matches/by-puuid/" + str(puuid) + "/ids?start=0&count=1"
@@ -121,7 +126,14 @@ class LOLClientCommandProcessor(ClientCommandProcessor):
         """Set the PUUID from Riot API using the passed Summoner Name"""
         if self.api_key != "":
             self.player_puuid = get_puuid_by_summoner_name(summoner_name, self.api_key, self.region_short)
-            self.output(f"PUUID Set")
+            if self.player_puuid == "Forbidden, check your API Key":
+                self.output("Forbidden, check your API Key")
+                self.player_puuid = ""
+            elif self.player_puuid == "Data not found.  Check your summoner name or configure your region.":
+                self.output("Data not found.  Check your summoner name or configure your region.")
+                self.player_puuid = ""
+            else:
+                self.output(f"PUUID Set")
         else:
             self.output(f"Please set your API Key")
     
@@ -149,7 +161,9 @@ class LOLClientCommandProcessor(ClientCommandProcessor):
                 game_mode_offset = get_game_mode_offset(last_match_info["info"]["gameMode"])
                 if won_match(self.player_puuid, last_match_info):
                     item_ids_purchased = get_item_ids_purchased(self.player_puuid, last_match_info)
+                    self.output("Item IDs Unlocked: " + str(unlocked_item_ids))
                     for item_id in item_ids_purchased:
+                        self.output("Item ID Purchased: " + str(int(item_id) + game_mode_offset + 10000000))
                         if int(item_id) + game_mode_offset in unlocked_item_ids:
                             new_locations.append(int(item_id) + game_mode_offset + 10000000)
                 else:
