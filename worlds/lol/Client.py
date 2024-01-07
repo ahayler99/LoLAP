@@ -32,13 +32,13 @@ def get_header(api_key):
             "X-Riot-Token": api_key
         }
 
-def get_puuid_by_summoner_name(summoner_name, api_key, region_short):
-    url = "https://" + region_short + ".api.riotgames.com/lol/summoner/v4/summoners/by-name/" + str(summoner_name)
+def get_puuid_by_riot_id(game_name, tag_line, api_key, region_long):
+    url = "https://" + region_long + ".api.riotgames.com/riot/account/v1/accounts/by-riot-id/" + game_name + "/" + tag_line
     response = requests.get(url, headers=get_header(api_key))
     if str(response) == "<Response [403]>":
         return "Forbidden, check your API Key"
     elif str(response) == "<Response [404]>":
-        return "Data not found.  Check your summoner name or configure your region."
+        return "Data not found.  Check your Riot ID, Tag Line, or configure your region."
     else:
         return json.loads(response.text)["puuid"]
 
@@ -79,6 +79,20 @@ def get_collected_item_ids():
                     f.close()
     return item_ids
 
+def get_sent_location_ids():
+    sent_location_ids = []
+    for root, dirs, files in os.walk(game_communication_path):
+        for file in files:
+            if str(file).startswith("send"):
+                sent_location_ids.append(str(file).replace("send", ""))
+    return sent_location_ids
+
+def get_available_checks():
+    item_ids = [int(str(item_id)[4:]) for item_id in get_collected_item_ids()]
+    sent_location_ids = [int(str(location_id)[4:]) for location_id in get_sent_location_ids()]
+    available_checks = list(set(item_ids)-set(sent_location_ids))
+    return available_checks
+
 def get_game_mode_offset(game_mode):
     if game_mode == "ARAM":
         return 5652000000
@@ -86,6 +100,16 @@ def get_game_mode_offset(game_mode):
         return 5653000000
     else:
         return 5651000000
+
+def get_item_name(check_item_id):
+    versions_url = "https://ddragon.leagueoflegends.com/api/versions.json"
+    most_recent_version = requests.get(versions_url).json()[0]
+    items_url = "https://ddragon.leagueoflegends.com/cdn/" + str(most_recent_version) + "/data/en_US/item.json"
+    item_data = requests.get(items_url).json()["data"]
+    for item_id in list(item_data.keys()):
+        if int(check_item_id) == int(item_id):
+            return item_data[item_id]["name"]
+    return "Not Found"
 
 def send_check(item_id):
     with open(os.path.join(game_communication_path, "send" + str(item_id)), 'w') as f:
@@ -122,15 +146,20 @@ class LOLClientCommandProcessor(ClientCommandProcessor):
         self.api_key = api_key
         self.output(f"API Key Set")
     
-    def _cmd_set_summoner_name(self, summoner_name):
-        """Set the PUUID from Riot API using the passed Summoner Name"""
+    def _cmd_set_riot_id(self, riot_id_and_tag_line):
+        """Set the PUUID from Riot API using the passed Riot ID and Tag Line"""
+        if "#" not in riot_id_and_tag_line:
+            self.output(f"Please format your input like: RIOT_ID#TAG_LINE")
+        else:
+            riot_id = riot_id_and_tag_line.split("#")[0]
+            tag_line = riot_id_and_tag_line.split("#")[1]
         if self.api_key != "":
-            self.player_puuid = get_puuid_by_summoner_name(summoner_name, self.api_key, self.region_short)
+            self.player_puuid = get_puuid_by_riot_id(riot_id, tag_line, self.api_key, self.region_long)
             if self.player_puuid == "Forbidden, check your API Key":
                 self.output("Forbidden, check your API Key")
                 self.player_puuid = ""
-            elif self.player_puuid == "Data not found.  Check your summoner name or configure your region.":
-                self.output("Data not found.  Check your summoner name or configure your region.")
+            elif self.player_puuid == "Data not found.  Check your Riot ID, Tag Line, or configure your region.":
+                self.output("Data not found.  Check your Riot ID, Tag Line, or configure your region.")
                 self.player_puuid = ""
             else:
                 self.output(f"PUUID Set")
@@ -222,6 +251,15 @@ class LOLClientCommandProcessor(ClientCommandProcessor):
         while i < len(self.region_short_options):
             self.output(f"Region " + str(i) + ": " + self.region_short_options[i] + " - " + self.region_long_options[i])
             i = i + 1
+    
+    def _cmd_print_available_checks(self):
+        """Prints all available items for which you can receive checks."""
+        available_checks = get_available_checks()
+        if len(available_checks) > 0:
+            for available_check in available_checks:
+                self.output(get_item_name(available_check))
+        else:
+            self.output(f"No available items!")
 
 class LOLContext(CommonContext):
     command_processor: int = LOLClientCommandProcessor
