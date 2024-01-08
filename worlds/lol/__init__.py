@@ -55,9 +55,16 @@ class LOLWorld(World):
 
     def create_items(self):
         self.set_item_table()
+        starting_locations = list(get_locations_by_category("Starting").keys())
+        starting_items = random.sample([item for item in self.game_item_table if not item.endswith("Rank")], 6)
+        i = 0
+        while i < 6:
+            self.multiworld.get_location(starting_locations[i], self.player).place_locked_item(self.create_item(starting_items[i]))
+            i = i + 1
         item_pool: List[LOLItem] = []
         for name in self.game_item_table:
-            item_pool += [self.create_item(name) for _ in range(0, 1)]
+            if name not in starting_items:
+                item_pool += [self.create_item(name) for _ in range(0, 1)]
 
         self.multiworld.itempool += item_pool
 

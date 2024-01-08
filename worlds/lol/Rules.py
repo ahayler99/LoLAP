@@ -8,16 +8,17 @@ def has_item(state: CollectionState, player: int, item) -> bool:
 def set_rules(multiworld: MultiWorld, player: int, game_mode: str, items: list[str]):
     if game_mode == "GameMode(Summoners Rift)":
         for item_id in sr_items:
-            if str(sr_items[item_id]) in items or len(items) == 0:
-                multiworld.get_location("Win Summoners Rift with " + str(sr_items[item_id]), player).access_rule = lambda state, item_id=item_id: has_item(state, player, "SR " + sr_items[item_id])
+            print(sr_items[item_id])
+            if "SR " + str(sr_items[item_id]) in items or len(items) == 0:
+                multiworld.get_location("Win Summoners Rift with " + str(sr_items[item_id]), player).access_rule = lambda state, id=item_id: has_item(state, player, "SR " + sr_items[id])
     if game_mode == "GameMode(Aram)":
         for item_id in aram_items:
-            if str(aram_items[item_id]) in items or len(items) == 0:
-                multiworld.get_location("Win ARAM with " + str(aram_items[item_id]), player).access_rule = lambda state, item_id=item_id: has_item(state, player, "ARAM " + aram_items[item_id])
+            if "ARAM " + str(aram_items[item_id]) in items or len(items) == 0:
+                multiworld.get_location("Win ARAM with " + str(aram_items[item_id]), player).access_rule = lambda state, id=item_id: has_item(state, player, "ARAM " + aram_items[id])
     if game_mode == "GameMode(Arena)":
         for item_id in arena_items:
-            if str(arena_items[item_id]) in items or len(items) == 0:
-                multiworld.get_location("Win Arena with " + str(arena_items[item_id]), player).access_rule = lambda state, item_id=item_id: has_item(state, player, "ARENA " + arena_items[item_id])
+            if "ARENA " + str(arena_items[item_id]) in items or len(items) == 0:
+                multiworld.get_location("Win Arena with " + str(arena_items[item_id]), player).access_rule = lambda state, id=item_id: has_item(state, player, "ARENA " + arena_items[id])
     
     # Win condition.
     multiworld.completion_condition[player] = lambda state: state.has_all({"Bronze Rank", "Silver Rank", "Gold Rank", "Platinum Rank", "Emerald Rank", "Diamond Rank"}, player)
