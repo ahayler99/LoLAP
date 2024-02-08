@@ -79,5 +79,5 @@ class LOLWorld(World):
                     ,"Required VS":      int(self.options.required_vision_score)
                     ,"Required Kills":   int(self.options.required_kills)
                     ,"Required Assists": int(self.options.required_assists)
-                    ,"Required LP":      int((len(self.multiworld.itempool) - len(self.options.champions.value)) * (self.options.required_lp / 100))}
+                    ,"Required LP":      int(((len(self.multiworld.itempool)+1) - len(self.options.champions.value)) * (self.options.required_lp / 100))}
         return slot_data
