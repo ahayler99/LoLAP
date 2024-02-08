@@ -36,14 +36,7 @@ def check_stdin() -> None:
         print("WARNING: Console input is not routed reliably on Windows, use the GUI instead.")
 
 class LOLClientCommandProcessor(ClientCommandProcessor):
-    api_key = ""
-    player_puuid = ""
-    region_short = "na1"
-    region_long = "americas"
-    
-    region_short_options = ["br1"     , "la1"     , "la2"     , "na1"     , "jp1" , "kr"  , "tw2" , "eun1"  , "euw1"  , "ru"    , "tr1"   , "oc1", "ph2", "sg" , "th2", "vn2"]
-    region_long_options =  ["americas", "americas", "americas", "americas", "asia", "asia", "asia", "europe", "europe", "europe", "europe", "sea", "sea", "sea", "sea", "sea"]
-    
+    pass
 
 class LOLContext(CommonContext):
     command_processor: int = LOLClientCommandProcessor
@@ -102,6 +95,13 @@ class LOLContext(CommonContext):
                 filename = f"send{ss}"
                 with open(os.path.join(self.game_communication_path, filename), 'w') as f:
                     f.close()
+            #Handle Slot Data
+            for slot_data_key in list(args['slot_data'].keys()):
+                with open(os.path.join(self.game_communication_path, slot_data_key.replace(" ", "_") + ".cfg"), 'w') as f:
+                    f.write(str(args['slot_data'][slot_data_key]))
+                    f.close()
+            #End Handle Slot Data
+            
         if cmd in {"ReceivedItems"}:
             start_index = args["index"]
             if start_index != len(self.items_received):
@@ -121,7 +121,7 @@ class LOLContext(CommonContext):
                                 item_id = str(f.readline()).replace("\n", "")
                                 location_id = str(f.readline()).replace("\n", "")
                                 player = str(f.readline()).replace("\n", "")
-                                if str(item_id) == str(NetworkItem(*item).item) and str(location_id) == str(NetworkItem(*item).location) and str(player) == str(NetworkItem(*item).player):
+                                if str(item_id) == str(NetworkItem(*item).item) and str(location_id) == str(NetworkItem(*item).location) and str(player) == str(NetworkItem(*item).player) and int(location_id) > 0:
                                     found = True
                     if not found:
                         filename = f"AP_{str(check_num+1)}.item"
