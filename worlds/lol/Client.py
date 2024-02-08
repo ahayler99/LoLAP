@@ -22,103 +22,6 @@ if not os.path.exists(game_communication_path):
     os.makedirs(game_communication_path)
 
 
-###API FUNCTIONS###
-def get_header(api_key):
-    return {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            "Accept-Language": "en-US,en;q=0.9",
-            "Accept-Charset": "application/x-www-form-urlencoded; charset=UTF-8",
-            "Origin": "https://developer.riotgames.com",
-            "X-Riot-Token": api_key
-        }
-
-def get_puuid_by_riot_id(game_name, tag_line, api_key, region_long):
-    url = "https://" + region_long + ".api.riotgames.com/riot/account/v1/accounts/by-riot-id/" + game_name + "/" + tag_line
-    response = requests.get(url, headers=get_header(api_key))
-    if str(response) == "<Response [403]>":
-        return "Forbidden, check your API Key"
-    elif str(response) == "<Response [404]>":
-        return "Data not found.  Check your Riot ID, Tag Line, or configure your region."
-    else:
-        return json.loads(response.text)["puuid"]
-
-def get_last_match_id_by_puuid(puuid, api_key, region_long):
-    url = "https://" + region_long + ".api.riotgames.com/lol/match/v5/matches/by-puuid/" + str(puuid) + "/ids?start=0&count=1"
-    response = requests.get(url, headers=get_header(api_key))
-    return json.loads(response.text)[0]
-
-def get_match_info_by_match_id(match_id, api_key, region_long):
-    url = "https://" + region_long + ".api.riotgames.com/lol/match/v5/matches/" + str(match_id)
-    response = requests.get(url, headers=get_header(api_key))
-    return json.loads(response.text)
-
-def get_item_ids_purchased(puuid, match_info):
-    item_ids = []
-    item_slots = ["item0", "item1", "item2", "item3", "item4", "item5", "item6"]
-    for participant in match_info["info"]["participants"]:
-        if participant["puuid"] == puuid:
-            for item_slot in item_slots:
-                if item_slot in participant.keys():
-                    item_ids.append(participant[item_slot])
-    return item_ids
-
-def won_match(puuid, match_info):
-    for participant in match_info["info"]["participants"]:
-        if participant["puuid"] == puuid:
-            return participant["win"]
-    return False
-
-def get_collected_item_ids():
-    item_ids = []
-    for root, dirs, files in os.walk(game_communication_path):
-        for file in files:
-            if str(file).startswith("AP"):
-                with open(os.path.join(game_communication_path, file), 'r') as f:
-                    item_id = int(f.readline())
-                    item_ids.append(item_id)
-                    f.close()
-    return item_ids
-
-def get_sent_location_ids():
-    sent_location_ids = []
-    for root, dirs, files in os.walk(game_communication_path):
-        for file in files:
-            if str(file).startswith("send"):
-                sent_location_ids.append(str(file).replace("send", ""))
-    return sent_location_ids
-
-def get_available_checks():
-    item_ids = [int(str(item_id)[4:]) for item_id in get_collected_item_ids()]
-    sent_location_ids = [int(str(location_id)[4:]) for location_id in get_sent_location_ids()]
-    available_checks = list(set(item_ids)-set(sent_location_ids))
-    return available_checks
-
-def get_game_mode_offset(game_mode):
-    if game_mode == "ARAM":
-        return 5652000000
-    elif game_mode == "CHERRY":
-        return 5653000000
-    else:
-        return 5651000000
-
-def get_item_name(check_item_id):
-    versions_url = "https://ddragon.leagueoflegends.com/api/versions.json"
-    most_recent_version = requests.get(versions_url).json()[0]
-    items_url = "https://ddragon.leagueoflegends.com/cdn/" + str(most_recent_version) + "/data/en_US/item.json"
-    item_data = requests.get(items_url).json()["data"]
-    for item_id in list(item_data.keys()):
-        if int(check_item_id) == int(item_id):
-            return item_data[item_id]["name"]
-    return "Not Found"
-
-def send_check(item_id):
-    with open(os.path.join(game_communication_path, "send" + str(item_id)), 'w') as f:
-        f.close()
-        
-def send_victory():
-    with open(os.path.join(game_communication_path, "victory"), 'w') as f:
-        f.close()
-
 ###Client###
 if __name__ == "__main__":
     Utils.init_logging("LOLClient", exception_logger="Client")
@@ -133,133 +36,7 @@ def check_stdin() -> None:
         print("WARNING: Console input is not routed reliably on Windows, use the GUI instead.")
 
 class LOLClientCommandProcessor(ClientCommandProcessor):
-    api_key = ""
-    player_puuid = ""
-    region_short = "na1"
-    region_long = "americas"
-    
-    region_short_options = ["br1"     , "la1"     , "la2"     , "na1"     , "jp1" , "kr"  , "tw2" , "eun1"  , "euw1"  , "ru"    , "tr1"   , "oc1", "ph2", "sg" , "th2", "vn2"]
-    region_long_options =  ["americas", "americas", "americas", "americas", "asia", "asia", "asia", "europe", "europe", "europe", "europe", "sea", "sea", "sea", "sea", "sea"]
-    
-    def _cmd_set_api_key(self, api_key):
-        """Set the API Key for RIOT API"""
-        self.api_key = api_key
-        self.output(f"API Key Set")
-    
-    def _cmd_set_riot_id(self, riot_id_and_tag_line):
-        """Set the PUUID from Riot API using the passed Riot ID and Tag Line"""
-        if "#" not in riot_id_and_tag_line:
-            self.output(f"Please format your input like: RIOT_ID#TAG_LINE")
-        else:
-            riot_id = riot_id_and_tag_line.split("#")[0]
-            tag_line = riot_id_and_tag_line.split("#")[1]
-        if self.api_key != "":
-            self.player_puuid = get_puuid_by_riot_id(riot_id, tag_line, self.api_key, self.region_long)
-            if self.player_puuid == "Forbidden, check your API Key":
-                self.output("Forbidden, check your API Key")
-                self.player_puuid = ""
-            elif self.player_puuid == "Data not found.  Check your Riot ID, Tag Line, or configure your region.":
-                self.output("Data not found.  Check your Riot ID, Tag Line, or configure your region.")
-                self.player_puuid = ""
-            else:
-                self.output(f"PUUID Set")
-        else:
-            self.output(f"Please set your API Key")
-    
-    def _cmd_set_region(self, region_number):
-        """Sets the region number.  Default is NA"""
-        if region_number.isnumeric():
-            region_number = int(region_number)
-            if region_number >= 0 and region_number < len(self.region_short_options):
-                self.region_short = self.region_short_options[region_number]
-                self.region_long = self.region_long_options[region_number]
-                self.output(f"Region set: " + self.region_short + " - " + self.region_long)
-            else:
-                self.output(f"Invalid int.  Please choose a valid option.  View options by running /print_region_options")
-        else:
-            self.output(f"Invalid integer passed.  Please pass a valid option.  View options by running /print_region_options")
-    
-    def _cmd_check_last_match(self):
-        """Checks the last match for victory with unlocked items"""
-        new_locations = []
-        if self.api_key != "" and self.player_puuid != "":
-            unlocked_item_ids = get_collected_item_ids()
-            if len(unlocked_item_ids) > 0:
-                last_match_id = get_last_match_id_by_puuid(self.player_puuid, self.api_key, self.region_long)
-                last_match_info = get_match_info_by_match_id(last_match_id, self.api_key, self.region_long)
-                game_mode_offset = get_game_mode_offset(last_match_info["info"]["gameMode"])
-                if won_match(self.player_puuid, last_match_info):
-                    item_ids_purchased = get_item_ids_purchased(self.player_puuid, last_match_info)
-                    self.output("Item IDs Unlocked: " + str(unlocked_item_ids))
-                    for item_id in item_ids_purchased:
-                        self.output("Item ID Purchased: " + str(int(item_id) + game_mode_offset + 10000000))
-                        if int(item_id) + game_mode_offset in unlocked_item_ids:
-                            new_locations.append(int(item_id) + game_mode_offset + 10000000)
-                else:
-                    self.output(f"Last Match Resulted in a Loss...")
-            else:
-                self.output(f"You have no items!")
-        else:
-            self.output(f"Please set your API Key and Summoner Name")
-        if len(new_locations) > 0:
-            for location in new_locations:
-                send_check(location)
-        else:
-            self.output(f"No new valid items")
-    
-    def _cmd_receive_starting_items(self):
-        """When you're ready to start your run, this receives your starting items"""
-        starting_location_ids = [5660_000001, 5660_000002, 5660_000003, 5660_000004, 5660_000005, 5660_000006]
-        for location_id in starting_location_ids:
-            with open(os.path.join(game_communication_path, "send" + str(location_id)), 'w') as f:
-                f.close()
-        self.output("Items Received")
-    
-    def _cmd_check_for_victory(self):
-        victory_item_ids = [5650000001, 5650000002, 5650000003, 5650000004, 5650000005, 5650000006]
-        victory_items_collected = 0
-        item_ids = get_collected_item_ids()
-        for item_id in item_ids:
-            if int(item_id) in victory_item_ids:
-                victory_items_collected = victory_items_collected + 1
-        if victory_items_collected >= len(victory_item_ids):
-            send_victory()
-        else:
-            self.output("You have " + str(victory_items_collected) + " out of " + str(len(victory_item_ids)) + " victory items collected.")
-    
-    def _cmd_print_item_ids(self):
-        """Prints currently collected item ids"""
-        item_ids = get_collected_item_ids()
-        for item_id in item_ids:
-            self.output(item_id)
-    
-    def _cmd_print_puuid(self):
-        """Prints the defined PUUID"""
-        self.output(self.player_puuid)
-    
-    def _cmd_print_api_key(self):
-        """Prints the defined API Key"""
-        self.output(self.api_key)
-    
-    def _cmd_print_region(self):
-        """Prints currently selected region."""
-        self.output(f"Region: " + self.region_short + " - " + self.region_long)
-    
-    def _cmd_print_region_options(self):
-        """Prints all region options"""
-        i = 0
-        while i < len(self.region_short_options):
-            self.output(f"Region " + str(i) + ": " + self.region_short_options[i] + " - " + self.region_long_options[i])
-            i = i + 1
-    
-    def _cmd_print_available_checks(self):
-        """Prints all available items for which you can receive checks."""
-        available_checks = get_available_checks()
-        if len(available_checks) > 0:
-            for available_check in available_checks:
-                self.output(get_item_name(available_check))
-        else:
-            self.output(f"No available items!")
+    pass
 
 class LOLContext(CommonContext):
     command_processor: int = LOLClientCommandProcessor
@@ -318,6 +95,13 @@ class LOLContext(CommonContext):
                 filename = f"send{ss}"
                 with open(os.path.join(self.game_communication_path, filename), 'w') as f:
                     f.close()
+            #Handle Slot Data
+            for slot_data_key in list(args['slot_data'].keys()):
+                with open(os.path.join(self.game_communication_path, slot_data_key.replace(" ", "_") + ".cfg"), 'w') as f:
+                    f.write(str(args['slot_data'][slot_data_key]))
+                    f.close()
+            #End Handle Slot Data
+            
         if cmd in {"ReceivedItems"}:
             start_index = args["index"]
             if start_index != len(self.items_received):
@@ -337,7 +121,7 @@ class LOLContext(CommonContext):
                                 item_id = str(f.readline()).replace("\n", "")
                                 location_id = str(f.readline()).replace("\n", "")
                                 player = str(f.readline()).replace("\n", "")
-                                if str(item_id) == str(NetworkItem(*item).item) and str(location_id) == str(NetworkItem(*item).location) and str(player) == str(NetworkItem(*item).player):
+                                if str(item_id) == str(NetworkItem(*item).item) and str(location_id) == str(NetworkItem(*item).location) and str(player) == str(NetworkItem(*item).player) and int(location_id) > 0:
                                     found = True
                     if not found:
                         filename = f"AP_{str(check_num+1)}.item"

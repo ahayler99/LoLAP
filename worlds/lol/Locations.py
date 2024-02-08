@@ -1,5 +1,5 @@
 from typing import Dict, NamedTuple, Optional
-from .Data import sr_items, aram_items, arena_items
+from .Data import champions
 import typing
 
 
@@ -25,18 +25,21 @@ def get_locations_by_category(category: str) -> Dict[str, LOLLocationData]:
 
 
 location_table: Dict[str, LOLLocationData] = {}
-for item_id in sr_items:
-    location_table["Win Summoners Rift with " + str(sr_items[item_id])]  = LOLLocationData("GameMode(Summoners Rift)", 5661_000000 + int(item_id))
-for item_id in aram_items:
-    location_table["Win ARAM with " + str(aram_items[item_id])]  = LOLLocationData("GameMode(Aram)", 5662_000000 + int(item_id))
-for item_id in arena_items:
-    location_table["Win Arena with " + str(arena_items[item_id])]  = LOLLocationData("GameMode(Arena)", 5663_000000 + int(item_id))
-location_table["Starting Item 1"]   = LOLLocationData("Starting"   , 5660_000001)
-location_table["Starting Item 2"]   = LOLLocationData("Starting"   , 5660_000002)
-location_table["Starting Item 3"]   = LOLLocationData("Starting"   , 5660_000003)
-location_table["Starting Item 4"]   = LOLLocationData("Starting"   , 5660_000004)
-location_table["Starting Item 5"]   = LOLLocationData("Starting"   , 5660_000005)
-location_table["Starting Item 6"]   = LOLLocationData("Starting"   , 5660_000006)
+for champion_id in champions:
+    champion_name = champions[champion_id]["name"]
+    location_table["Assist Taking Dragon as " + champion_name]      = LOLLocationData("Objective", 566_000000 + (int(champion_id) * 100) + 1)
+    location_table["Assist Taking Rift Herald as " + champion_name] = LOLLocationData("Objective", 566_000000 + (int(champion_id) * 100) + 2)
+    location_table["Assist Taking Baron as " + champion_name]       = LOLLocationData("Objective", 566_000000 + (int(champion_id) * 100) + 3)
+    location_table["Assist Taking Tower as " + champion_name]       = LOLLocationData("Objective", 566_000000 + (int(champion_id) * 100) + 4)
+    location_table["Assist Taking Inhibitor as " + champion_name]   = LOLLocationData("Objective", 566_000000 + (int(champion_id) * 100) + 5)
+    location_table["Get X Assists as " + champion_name]             = LOLLocationData("Objective", 566_000000 + (int(champion_id) * 100) + 6)
+    if "Support" in champions[champion_id]["tags"]:
+        location_table["Get X Ward Score as " + champion_name]      = LOLLocationData("Objective", 566_000000 + (int(champion_id) * 100) + 7)
+    if "Support" not in champions[champion_id]["tags"]:
+        location_table["Get X Kills as " + champion_name]           = LOLLocationData("Objective", 566_000000 + (int(champion_id) * 100) + 8)
+        location_table["Get X Creep Score as " + champion_name]     = LOLLocationData("Objective", 566_000000 + (int(champion_id) * 100) + 9)
+
+location_table["Starting Champion"] = LOLLocationData("Starting", 566_000000)
 
 event_location_table: Dict[str, LOLLocationData] = {
 }

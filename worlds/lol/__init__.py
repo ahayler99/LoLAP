@@ -4,9 +4,10 @@ from BaseClasses import Tutorial
 from worlds.AutoWorld import WebWorld, World
 from .Items import LOLItem, LOLItemData, event_item_table, get_items_by_category, item_table
 from .Locations import LOLLocation, location_table, get_locations_by_category
-from .Options import lol_options
+from .Options import LOLOptions
 from .Regions import create_regions
 from .Rules import set_rules
+from .Data import champions
 from worlds.LauncherComponents import Component, components, Type, launch_subprocess
 import random
 
@@ -36,62 +37,47 @@ class LOLWorld(World):
     League of Legends (LoL), commonly referred to as League, is a 2009 multiplayer online battle arena video game developed and published by Riot Games.
     """
     game = "League of Legends"
-    option_definitions = lol_options
+    options_dataclass = LOLOptions
+    options: LOLOptions
     topology_present = True
-    data_version = 4
     required_client_version = (0, 3, 5)
     web = LOLWeb()
-    game_item_table = []
 
     item_name_to_id = {name: data.code for name, data in item_table.items()}
     location_name_to_id = {name: data.code for name, data in location_table.items()}
 
-    # TODO: Replace calls to this function with "options-dict", once that PR is completed and merged.
-    def get_setting(self, name: str):
-        return getattr(self.multiworld, name)[self.player]
-
-    def fill_slot_data(self) -> dict:
-        return {option_name: self.get_setting(option_name).value for option_name in lol_options}
-
     def create_items(self):
-        self.set_item_table()
-        starting_locations = list(get_locations_by_category("Starting").keys())
-        starting_items = random.sample([item for item in self.game_item_table if not item.endswith("Rank")], 6)
-        i = 0
-        while i < 6:
-            self.multiworld.get_location(starting_locations[i], self.player).place_locked_item(self.create_item(starting_items[i]))
-            i = i + 1
+        print(self.options.champions.value)
+        possible_champions = []
+        for champion_id in champions:
+            champion_name = champions[champion_id]["name"]
+            if champion_name in self.options.champions.value:
+                possible_champions.append(champion_name)
+        starting_champion = random.choice(possible_champions)
+        self.multiworld.get_location("Starting Champion", self.player).place_locked_item(self.create_item(starting_champion))
+        total_locations = len(self.multiworld.get_unfilled_locations(self.player))
         item_pool: List[LOLItem] = []
-        for name in self.game_item_table:
-            if name not in starting_items:
+        for name, data in item_table.items():
+            if name in possible_champions and name != starting_champion:
                 item_pool += [self.create_item(name) for _ in range(0, 1)]
-
+        while len(item_pool) < total_locations:
+            item_pool.append(self.create_item("LP"))
         self.multiworld.itempool += item_pool
-
-    def get_filler_item_name(self) -> str:
-        fillers = {}
-        disclude = []
-        fillers.update(get_items_by_category("Item", disclude))
-        weights = [data.weight for data in fillers.values()]
-        return self.multiworld.random.choices([filler for filler in fillers.keys()], weights, k=1)[0]
         
     def create_item(self, name: str) -> LOLItem:
         data = item_table[name]
         return LOLItem(name, data.classification, data.code, self.player)
 
-    def create_event(self, name: str) -> LOLItem:
-        data = event_item_table[name]
-        return LOLItem(name, data.classification, data.code, self.player)
-
     def set_rules(self):
-        set_rules(self.multiworld, self.player, str(self.get_setting("game_mode")), self.game_item_table)
+        set_rules(self.multiworld, self.player, self.options, int((len(self.multiworld.itempool) - len(self.options.champions.value)) * (self.options.required_lp / 100)))
 
     def create_regions(self):
-        self.set_item_table()
-        create_regions(self.multiworld, self.player, str(self.get_setting("game_mode")), self.game_item_table)
+        create_regions(self.multiworld, self.player, self.options)
     
-    def set_item_table(self):
-        if len(self.game_item_table) == 0:
-            self.game_item_table = get_items_by_category(str(self.get_setting("game_mode")), []).keys()
-            self.game_item_table = random.sample(list(self.game_item_table), int(self.get_setting("item_num")))
-            self.game_item_table = self.game_item_table + list(get_items_by_category("Victory", []).keys())
+    def fill_slot_data(self) -> dict:
+        slot_data = {"Required CS":      int(self.options.required_creep_score)
+                    ,"Required VS":      int(self.options.required_vision_score)
+                    ,"Required Kills":   int(self.options.required_kills)
+                    ,"Required Assists": int(self.options.required_assists)
+                    ,"Required LP":      int((len(self.multiworld.itempool) - len(self.options.champions.value)) * (self.options.required_lp / 100))}
+        return slot_data

@@ -2,7 +2,7 @@ from typing import Dict, List, NamedTuple, Optional
 
 from BaseClasses import MultiWorld, Region, Entrance
 from .Locations import LOLLocation, location_table, get_locations_by_category
-from .Data import sr_items, aram_items, arena_items
+from .Data import champions
 
 
 class LOLRegionData(NamedTuple):
@@ -10,7 +10,7 @@ class LOLRegionData(NamedTuple):
     region_exits: Optional[List[str]]
 
 
-def create_regions(multiworld: MultiWorld, player: int, game_mode: str, items: list[str]):
+def create_regions(multiworld: MultiWorld, player: int, options):
     regions: Dict[str, LOLRegionData] = {
         "Menu":     LOLRegionData(None, ["Match"]),
         "Match":  LOLRegionData([], []),
@@ -18,24 +18,22 @@ def create_regions(multiworld: MultiWorld, player: int, game_mode: str, items: l
 
     # Set up locations
     
-    if game_mode == "GameMode(Summoners Rift)":
-        for item_id in sr_items:
-            if "SR " + str(sr_items[item_id]) in items or len(items) == 0:
-                regions["Match"].locations.append("Win Summoners Rift with " + str(sr_items[item_id]))
-    if game_mode == "GameMode(Aram)":
-        for item_id in aram_items:
-            if "ARAM " + str(aram_items[item_id]) in items or len(items) == 0:
-                regions["Match"].locations.append("Win ARAM with " + str(aram_items[item_id]))
-    if game_mode == "GameMode(Arena)":
-        for item_id in arena_items:
-            if "ARENA " + str(arena_items[item_id]) in items or len(items) == 0:
-                regions["Match"].locations.append("Win Arena with " + str(arena_items[item_id]))
-    regions["Match"].locations.append("Starting Item 1")
-    regions["Match"].locations.append("Starting Item 2")
-    regions["Match"].locations.append("Starting Item 3")
-    regions["Match"].locations.append("Starting Item 4")
-    regions["Match"].locations.append("Starting Item 5")
-    regions["Match"].locations.append("Starting Item 6")
+    for champion_id in champions:
+        champion_name = champions[champion_id]["name"]
+        if champion_name in options.champions.value:
+            regions["Match"].locations.append("Assist Taking Dragon as "      + champion_name)
+            regions["Match"].locations.append("Assist Taking Rift Herald as " + champion_name)
+            regions["Match"].locations.append("Assist Taking Baron as "       + champion_name)
+            regions["Match"].locations.append("Assist Taking Tower as "       + champion_name)
+            regions["Match"].locations.append("Assist Taking Inhibitor as "   + champion_name)
+            regions["Match"].locations.append("Assist Taking Inhibitor as "   + champion_name)
+            regions["Match"].locations.append("Get X Assists as "             + champion_name)
+            if "Support" in champions[champion_id]["tags"]:
+                regions["Match"].locations.append("Get X Ward Score as "      + champion_name)
+            if "Support" not in champions[champion_id]["tags"]:
+                regions["Match"].locations.append("Get X Kills as "           + champion_name)
+                regions["Match"].locations.append("Get X Creep Score as "     + champion_name)
+    regions["Match"].locations.append("Starting Champion")
     
     # Set up the regions correctly.
     for name, data in regions.items():
