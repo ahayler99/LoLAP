@@ -17,7 +17,6 @@ def set_rules(multiworld: MultiWorld, player: int, options, required_lp):
             multiworld.get_location("Assist Taking Baron as "       + champion_name, player).access_rule = lambda state, champion_name = champion_name: has_item(state, player, champion_name)
             multiworld.get_location("Assist Taking Tower as "       + champion_name, player).access_rule = lambda state, champion_name = champion_name: has_item(state, player, champion_name)
             multiworld.get_location("Assist Taking Inhibitor as "   + champion_name, player).access_rule = lambda state, champion_name = champion_name: has_item(state, player, champion_name)
-            multiworld.get_location("Assist Taking Inhibitor as "   + champion_name, player).access_rule = lambda state, champion_name = champion_name: has_item(state, player, champion_name)
             multiworld.get_location("Get X Assists as "             + champion_name, player).access_rule = lambda state, champion_name = champion_name: has_item(state, player, champion_name)
             if "Support" in champions[champion_id]["tags"]:
                 multiworld.get_location("Get X Ward Score as "      + champion_name, player).access_rule = lambda state, champion_name = champion_name: has_item(state, player, champion_name)

@@ -59,6 +59,15 @@ class RequiredAssists(Range):
     range_end = 30
     display_name = "Required Assists"
 
+class StartingChampions(Range):
+    """
+    Number of champions in your starting inventory
+    """
+    default = 3
+    range_start = 1
+    range_end = 5
+    display_name = "Starting Champions"
+
 @dataclass
 class LOLOptions(PerGameCommonOptions):
     champions: Champions
@@ -67,3 +76,4 @@ class LOLOptions(PerGameCommonOptions):
     required_kills: RequiredKills
     required_assists: RequiredAssists
     required_lp: RequiredLPPercentage
+    starting_champions: StartingChampions

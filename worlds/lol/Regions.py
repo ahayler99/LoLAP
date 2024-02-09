@@ -12,8 +12,8 @@ class LOLRegionData(NamedTuple):
 
 def create_regions(multiworld: MultiWorld, player: int, options):
     regions: Dict[str, LOLRegionData] = {
-        "Menu":     LOLRegionData(None, ["Match"]),
-        "Match":  LOLRegionData([], []),
+        "Menu":  LOLRegionData(None, ["Match"]),
+        "Match": LOLRegionData([],   []),
     }
 
     # Set up locations
@@ -26,14 +26,14 @@ def create_regions(multiworld: MultiWorld, player: int, options):
             regions["Match"].locations.append("Assist Taking Baron as "       + champion_name)
             regions["Match"].locations.append("Assist Taking Tower as "       + champion_name)
             regions["Match"].locations.append("Assist Taking Inhibitor as "   + champion_name)
-            regions["Match"].locations.append("Assist Taking Inhibitor as "   + champion_name)
             regions["Match"].locations.append("Get X Assists as "             + champion_name)
             if "Support" in champions[champion_id]["tags"]:
                 regions["Match"].locations.append("Get X Ward Score as "      + champion_name)
             if "Support" not in champions[champion_id]["tags"]:
                 regions["Match"].locations.append("Get X Kills as "           + champion_name)
                 regions["Match"].locations.append("Get X Creep Score as "     + champion_name)
-    regions["Match"].locations.append("Starting Champion")
+    for i in range(min(options.starting_champions, len(options.champions.value))):
+        regions["Match"].locations.append("Starting Champion " + str(i+1))
     
     # Set up the regions correctly.
     for name, data in regions.items():
