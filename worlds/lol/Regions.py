@@ -33,7 +33,8 @@ def create_regions(multiworld: MultiWorld, player: int, options):
             if "Support" not in champions[champion_id]["tags"]:
                 regions["Match"].locations.append("Get X Kills as "           + champion_name)
                 regions["Match"].locations.append("Get X Creep Score as "     + champion_name)
-    regions["Match"].locations.append("Starting Champion")
+    for i in range(min(options.starting_champions, len(options.champions.value))):
+        regions["Match"].locations.append("Starting Champion " + str(i+1))
     
     # Set up the regions correctly.
     for name, data in regions.items():

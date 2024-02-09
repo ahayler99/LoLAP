@@ -53,8 +53,9 @@ class LOLWorld(World):
             champion_name = champions[champion_id]["name"]
             if champion_name in self.options.champions.value:
                 possible_champions.append(champion_name)
-        starting_champion = random.choice(possible_champions)
-        self.multiworld.get_location("Starting Champion", self.player).place_locked_item(self.create_item(starting_champion))
+        starting_champions = random.sample(possible_champions, min(self.options.starting_champions, len(self.options.champions.value)))
+        for i in range(len(starting_champions)):
+            self.multiworld.get_location("Starting Champion " + str(i+1), self.player).place_locked_item(self.create_item(starting_champions[i]))
         total_locations = len(self.multiworld.get_unfilled_locations(self.player))
         item_pool: List[LOLItem] = []
         for name, data in item_table.items():
