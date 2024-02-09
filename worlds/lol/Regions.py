@@ -12,8 +12,8 @@ class LOLRegionData(NamedTuple):
 
 def create_regions(multiworld: MultiWorld, player: int, options):
     regions: Dict[str, LOLRegionData] = {
-        "Menu":     LOLRegionData(None, ["Match"]),
-        "Match":  LOLRegionData([], []),
+        "Menu":  LOLRegionData(None, ["Match"]),
+        "Match": LOLRegionData([],   []),
     }
 
     # Set up locations
@@ -25,7 +25,6 @@ def create_regions(multiworld: MultiWorld, player: int, options):
             regions["Match"].locations.append("Assist Taking Rift Herald as " + champion_name)
             regions["Match"].locations.append("Assist Taking Baron as "       + champion_name)
             regions["Match"].locations.append("Assist Taking Tower as "       + champion_name)
-            regions["Match"].locations.append("Assist Taking Inhibitor as "   + champion_name)
             regions["Match"].locations.append("Assist Taking Inhibitor as "   + champion_name)
             regions["Match"].locations.append("Get X Assists as "             + champion_name)
             if "Support" in champions[champion_id]["tags"]:

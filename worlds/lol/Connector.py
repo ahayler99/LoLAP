@@ -102,8 +102,9 @@ def display_values(window, game_values):
     window["Values Table"].update(values=value_table_rows)
 
 def send_starting_champion_check():
-    with open(os.path.join(game_communication_path, "send566000000"), 'w') as f:
-        f.close()
+    for i in range(6):
+        with open(os.path.join(game_communication_path, "send56600000" + str(i)), 'w') as f:
+            f.close()
 
 def check_lp_for_victory(game_values):
     if game_values["current_lp"] >= game_values["required_lp"] and game_values["required_lp"] != 0:

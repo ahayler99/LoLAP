@@ -42,12 +42,13 @@ class LOLWorld(World):
     topology_present = True
     required_client_version = (0, 3, 5)
     web = LOLWeb()
+    added_lp = 0
 
     item_name_to_id = {name: data.code for name, data in item_table.items()}
     location_name_to_id = {name: data.code for name, data in location_table.items()}
 
     def create_items(self):
-        print(self.options.champions.value)
+        item_pool: List[LOLItem] = []
         possible_champions = []
         for champion_id in champions:
             champion_name = champions[champion_id]["name"]
@@ -57,12 +58,12 @@ class LOLWorld(World):
         for i in range(len(starting_champions)):
             self.multiworld.get_location("Starting Champion " + str(i+1), self.player).place_locked_item(self.create_item(starting_champions[i]))
         total_locations = len(self.multiworld.get_unfilled_locations(self.player))
-        item_pool: List[LOLItem] = []
         for name, data in item_table.items():
-            if name in possible_champions and name != starting_champion:
+            if name in possible_champions and name not in starting_champions:
                 item_pool += [self.create_item(name) for _ in range(0, 1)]
         while len(item_pool) < total_locations:
             item_pool.append(self.create_item("LP"))
+            self.added_lp += 1
         self.multiworld.itempool += item_pool
         
     def create_item(self, name: str) -> LOLItem:
@@ -70,7 +71,7 @@ class LOLWorld(World):
         return LOLItem(name, data.classification, data.code, self.player)
 
     def set_rules(self):
-        set_rules(self.multiworld, self.player, self.options, int((len(self.multiworld.itempool) - len(self.options.champions.value)) * (self.options.required_lp / 100)))
+        set_rules(self.multiworld, self.player, self.options, int(self.added_lp * (self.options.required_lp / 100)))
 
     def create_regions(self):
         create_regions(self.multiworld, self.player, self.options)
@@ -80,5 +81,5 @@ class LOLWorld(World):
                     ,"Required VS":      int(self.options.required_vision_score)
                     ,"Required Kills":   int(self.options.required_kills)
                     ,"Required Assists": int(self.options.required_assists)
-                    ,"Required LP":      int(((len(self.multiworld.itempool)+1) - len(self.options.champions.value)) * (self.options.required_lp / 100))}
+                    ,"Required LP":      int(self.added_lp * (self.options.required_lp / 100))}
         return slot_data
