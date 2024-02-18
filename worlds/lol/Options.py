@@ -17,7 +17,7 @@ class RequiredLPPercentage(Range):
 
 class Champions(OptionSet):
     """
-    Which champions are included in the item pool?
+    Which champions are possibly included in the item pool?
     """
     display_name = "Champions"
     valid_keys = [champions[champion_id]["name"] for champion_id in champions]
@@ -68,6 +68,15 @@ class StartingChampions(Range):
     range_end = 5
     display_name = "Starting Champions"
 
+class ChampionSubsetCount(Range):
+    """
+    Number of champions to randomly select for the item pool of those listed provided.
+    """
+    default = 20
+    range_start = 1
+    range_end = 200
+    display_name = "Champion Subset Count"
+
 @dataclass
 class LOLOptions(PerGameCommonOptions):
     champions: Champions
@@ -77,3 +86,4 @@ class LOLOptions(PerGameCommonOptions):
     required_assists: RequiredAssists
     required_lp: RequiredLPPercentage
     starting_champions: StartingChampions
+    champion_subset_count: ChampionSubsetCount

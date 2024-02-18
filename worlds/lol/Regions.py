@@ -10,7 +10,7 @@ class LOLRegionData(NamedTuple):
     region_exits: Optional[List[str]]
 
 
-def create_regions(multiworld: MultiWorld, player: int, options):
+def create_regions(multiworld: MultiWorld, player: int, options, possible_champions):
     regions: Dict[str, LOLRegionData] = {
         "Menu":  LOLRegionData(None, ["Match"]),
         "Match": LOLRegionData([],   []),
@@ -20,7 +20,7 @@ def create_regions(multiworld: MultiWorld, player: int, options):
     
     for champion_id in champions:
         champion_name = champions[champion_id]["name"]
-        if champion_name in options.champions.value:
+        if champion_name in possible_champions:
             regions["Match"].locations.append("Assist Taking Dragon as "      + champion_name)
             regions["Match"].locations.append("Assist Taking Rift Herald as " + champion_name)
             regions["Match"].locations.append("Assist Taking Baron as "       + champion_name)
@@ -32,7 +32,7 @@ def create_regions(multiworld: MultiWorld, player: int, options):
             if "Support" not in champions[champion_id]["tags"]:
                 regions["Match"].locations.append("Get X Kills as "           + champion_name)
                 regions["Match"].locations.append("Get X Creep Score as "     + champion_name)
-    for i in range(min(options.starting_champions, len(options.champions.value))):
+    for i in range(min(options.starting_champions, len(possible_champions))):
         regions["Match"].locations.append("Starting Champion " + str(i+1))
     
     # Set up the regions correctly.

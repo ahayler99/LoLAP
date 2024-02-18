@@ -9,7 +9,6 @@ from .Regions import create_regions
 from .Rules import set_rules
 from .Data import champions
 from worlds.LauncherComponents import Component, components, Type, launch_subprocess
-import random
 
 
 
@@ -43,23 +42,20 @@ class LOLWorld(World):
     required_client_version = (0, 3, 5)
     web = LOLWeb()
     added_lp = 0
+    possible_champions = []
 
     item_name_to_id = {name: data.code for name, data in item_table.items()}
     location_name_to_id = {name: data.code for name, data in location_table.items()}
 
     def create_items(self):
         item_pool: List[LOLItem] = []
-        possible_champions = []
-        for champion_id in champions:
-            champion_name = champions[champion_id]["name"]
-            if champion_name in self.options.champions.value:
-                possible_champions.append(champion_name)
-        starting_champions = random.sample(possible_champions, min(self.options.starting_champions, len(self.options.champions.value)))
+        self.choose_possible_champions()
+        starting_champions = self.random.sample(self.possible_champions, min(self.options.starting_champions, len(self.possible_champions)))
         for i in range(len(starting_champions)):
             self.multiworld.get_location("Starting Champion " + str(i+1), self.player).place_locked_item(self.create_item(starting_champions[i]))
         total_locations = len(self.multiworld.get_unfilled_locations(self.player))
         for name, data in item_table.items():
-            if name in possible_champions and name not in starting_champions:
+            if name in self.possible_champions and name not in starting_champions:
                 item_pool += [self.create_item(name) for _ in range(0, 1)]
         while len(item_pool) < total_locations:
             item_pool.append(self.create_item("LP"))
@@ -71,10 +67,12 @@ class LOLWorld(World):
         return LOLItem(name, data.classification, data.code, self.player)
 
     def set_rules(self):
-        set_rules(self.multiworld, self.player, self.options, int(self.added_lp * (self.options.required_lp / 100)))
+        self.choose_possible_champions()
+        set_rules(self.multiworld, self.player, self.options, int(self.added_lp * (self.options.required_lp / 100)), self.possible_champions)
 
     def create_regions(self):
-        create_regions(self.multiworld, self.player, self.options)
+        self.choose_possible_champions()
+        create_regions(self.multiworld, self.player, self.options, self.possible_champions)
     
     def fill_slot_data(self) -> dict:
         slot_data = {"Required CS":      int(self.options.required_creep_score)
@@ -83,3 +81,12 @@ class LOLWorld(World):
                     ,"Required Assists": int(self.options.required_assists)
                     ,"Required LP":      int(self.added_lp * (self.options.required_lp / 100))}
         return slot_data
+    
+    def choose_possible_champions(self):
+        if len(self.possible_champions) == 0:
+            for champion_id in champions:
+                champion_name = champions[champion_id]["name"]
+                if champion_name in self.options.champions.value:
+                    self.possible_champions.append(champion_name)
+            if len(self.possible_champions) > self.options.champion_subset_count:
+                self.possible_champions = self.random.sample(self.possible_champions, self.options.champion_subset_count)

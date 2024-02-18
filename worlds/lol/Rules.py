@@ -8,10 +8,10 @@ def has_item(state: CollectionState, player: int, item) -> bool:
 def has_at_least(state: CollectionState, player: int, item_name, item_qty_required) -> bool:
     return state.count(item_name, player) >= item_qty_required
 
-def set_rules(multiworld: MultiWorld, player: int, options, required_lp):
+def set_rules(multiworld: MultiWorld, player: int, options, required_lp, possible_champions):
     for champion_id in champions:
         champion_name = champions[champion_id]["name"]
-        if champion_name in options.champions.value:
+        if champion_name in possible_champions:
             multiworld.get_location("Assist Taking Dragon as "      + champion_name, player).access_rule = lambda state, champion_name = champion_name: has_item(state, player, champion_name)
             multiworld.get_location("Assist Taking Rift Herald as " + champion_name, player).access_rule = lambda state, champion_name = champion_name: has_item(state, player, champion_name)
             multiworld.get_location("Assist Taking Baron as "       + champion_name, player).access_rule = lambda state, champion_name = champion_name: has_item(state, player, champion_name)
