@@ -41,15 +41,19 @@ class LOLWorld(World):
     topology_present = True
     required_client_version = (0, 3, 5)
     web = LOLWeb()
-    added_lp = 0
-    possible_champions = []
 
     item_name_to_id = {name: data.code for name, data in item_table.items()}
     location_name_to_id = {name: data.code for name, data in location_table.items()}
+    
+    def __init__(self, multiworld: "MultiWorld", player: int):
+        super(LOLWorld, self).__init__(multiworld, player)
+        self.possible_champions = []
+        self.added_lp = 0
 
     def create_items(self):
         item_pool: List[LOLItem] = []
         self.choose_possible_champions()
+        print(self.possible_champions)
         starting_champions = self.random.sample(self.possible_champions, min(self.options.starting_champions, len(self.possible_champions)))
         for i in range(len(starting_champions)):
             self.multiworld.get_location("Starting Champion " + str(i+1), self.player).place_locked_item(self.create_item(starting_champions[i]))
@@ -84,6 +88,7 @@ class LOLWorld(World):
     
     def choose_possible_champions(self):
         if len(self.possible_champions) == 0:
+            print("Here")
             for champion_id in champions:
                 champion_name = champions[champion_id]["name"]
                 if champion_name in self.options.champions.value:
