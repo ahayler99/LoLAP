@@ -21,7 +21,7 @@ class Champions(OptionSet):
     """
     display_name = "Champions"
     valid_keys = [champions[champion_id]["name"] for champion_id in champions]
-    default = set([champions[champion_id]["name"] for champion_id in champions])
+    default = sorted(set([champions[champion_id]["name"] for champion_id in champions]))
 
 class RequiredCreepScore(Range):
     """
