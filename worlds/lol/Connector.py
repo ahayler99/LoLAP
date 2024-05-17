@@ -116,7 +116,7 @@ def get_player_name(game_data):
 
 def get_champion_name(game_data, player_name):
     for player in game_data["allPlayers"]:
-        if player["summonerName"] == player_name:
+        if player["summonerName"].split("#")[0] == player_name:
             return player["championName"]
 
 def get_champion_id(champion_name):
