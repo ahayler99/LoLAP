@@ -112,11 +112,11 @@ def check_lp_for_victory(game_values):
             f.close()
 
 def get_player_name(game_data):
-    return game_data["activePlayer"]["summonerName"].split("#")[0]
+    return game_data["activePlayer"]["riotIdGameName"]
 
 def get_champion_name(game_data, player_name):
     for player in game_data["allPlayers"]:
-        if player["summonerName"].split("#")[0] == player_name:
+        if player["riotIdGameName"] == player_name:
             return player["championName"]
 
 def get_champion_id(champion_name):
@@ -174,25 +174,25 @@ def assisted_kill(game_data, player_name):
 
 def player_vision_score(game_data, player_name):
     for player in game_data["allPlayers"]:
-        if player["summonerName"] == player_name:
+        if player["riotIdGameName"] == player_name:
             return player["scores"]["wardScore"]
     return 0
 
 def player_creep_score(game_data, player_name):
     for player in game_data["allPlayers"]:
-        if player["summonerName"] == player_name:
+        if player["riotIdGameName"] == player_name:
             return player["scores"]["creepScore"]
     return 0
 
 def player_kills(game_data, player_name):
     for player in game_data["allPlayers"]:
-        if player["summonerName"] == player_name:
+        if player["riotIdGameName"] == player_name:
             return player["scores"]["kills"]
     return 0
 
 def player_assists(game_data, player_name):
     for player in game_data["allPlayers"]:
-        if player["summonerName"] == player_name:
+        if player["riotIdGameName"] == player_name:
             return player["scores"]["assists"]
     return 0
 
