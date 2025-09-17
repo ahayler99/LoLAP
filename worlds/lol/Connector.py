@@ -1,4 +1,5 @@
-import PySimpleGUI as sg
+from msilib.schema import CheckBox
+import FreeSimpleGUI as sg
 import json
 import requests
 import os
@@ -8,10 +9,30 @@ versions_url = "https://ddragon.leagueoflegends.com/api/versions.json"
 most_recent_version = requests.get(versions_url).json()[0]
 champions_url = "https://ddragon.leagueoflegends.com/cdn/" + str(most_recent_version) + "/data/en_US/champion.json"
 champions = {}
+playrate_url = "http://cdn.merakianalytics.com/riot/lol/resources/latest/en-US/championrates.json"
 champion_data = requests.get(champions_url).json()["data"]
+playrate_data = requests.get(playrate_url).json()["data"]
+eventflag = False
+row = 0
 
 for champion in list(champion_data.keys()):
-    champions[int(champion_data[champion]["key"])] = champion_data[champion]
+    champid = champion_data[champion]["key"]
+    champions[int(champid)] = champion_data[champion]
+    role_data = playrate_data[champid]
+    role1 = "NONE"
+    role1num = 0
+    role2 = "NONE"
+    role2num = 0
+    for role in list(role_data.keys()):
+        if role_data[role]["playRate"] > role1num:
+            role1num = role_data[role]["playRate"]
+            role1 = role
+    del role_data[role]
+    for role in list(role_data.keys()):
+        if role_data[role]["playRate"] > role1num:
+            role2num = role_data[role]["playRate"]
+            role2 = role
+    champions[int(champid)]["tags"] = [role1, role2]
 
 ###SET GLOBAL VARIABLES###
 url = "https://127.0.0.1:2999/liveclientdata/allgamedata"
@@ -57,6 +78,31 @@ def get_items(game_values):
                         unlocked_champion_ids.append(item_id % 565000000)
                     f.close()
 
+def check_sent(champid):
+    completed_checks = []
+    for root, dirs, files in os.walk(game_communication_path):
+        for file in files:
+            if file.startswith('send'):
+                foo, prev_sent = file.split("send566")
+                if str(champid) in prev_sent:
+                    foo, prev_sent = prev_sent.split(str(champid))
+                    completed_checks.append(int(prev_sent))
+    return completed_checks
+
+def check_checks(champid):
+    no_check = []
+    if "UTILITY" not in champions[champid]["tags"]:
+        no_check.append(6)
+        no_check.append(7)
+    if "BOTTOM" or "UTILITY" in champions[champid]["tags"]:
+        no_check.append(3)
+    if "JUNGLE" in champions[champid]["tags"]:
+        no_check.append(4)
+        no_check.append(5)
+    if "TOP" in champions[champid]["tags"]:
+        no_check.append(1)
+    return no_check
+
 def read_cfg(game_values):
     for root, dirs, files in os.walk(game_communication_path):
         if "Required_Assists.cfg" in files:
@@ -90,16 +136,30 @@ def display_champion_list(window):
     for champion_id in unlocked_champion_ids:
         champion_table_rows.append([champions[champion_id]["name"], champion_id])
     window["Champions Unlocked Table"].update(values=champion_table_rows)
+    return champion_table_rows
 
 def display_values(window, game_values):
     value_table_rows = []
-    value_table_rows.append(['Required Kills:'       , str(game_values["required_kills"])])
+    value_table_rows.append(['Dragon Assist'           ])
+    value_table_rows.append(['Baron Assist'           ])
+    value_table_rows.append(['Herald/Grubs Assist'           ])
+    value_table_rows.append(['Tower Assist'          ])
+    value_table_rows.append(['Inhibitors Assist'           ])
     value_table_rows.append(['Required Assists:'     , str(game_values["required_assists"])])
-    value_table_rows.append(['Required CS:'          , str(game_values["required_cs"])])
     value_table_rows.append(['Required VS:'          , str(game_values["required_vs"])])
-    value_table_rows.append(['Required LP:'          , str(game_values["required_lp"])])
-    value_table_rows.append(['Current LP:'           , str(game_values["current_lp"])])
+    value_table_rows.append(['Required Kills:'       , str(game_values["required_kills"])])
+    value_table_rows.append(['Required CS:'          , str(game_values["required_cs"])])
+
     window["Values Table"].update(values=value_table_rows)
+
+def display_values_colours(window, game_values, completed_checks, no_check):
+    window["Values Table"].update(select_rows = None, row_colors = None)
+    if completed_checks:
+        for i in completed_checks:
+            window["Values Table"].update(row_colors=[(i-1, 'green')])
+    if no_check:
+        for i in no_check:
+            window["Values Table"].update(row_colors=[(i-1, 'red')])
 
 def send_starting_champion_check():
     for i in range(6):
@@ -112,11 +172,11 @@ def check_lp_for_victory(game_values):
             f.close()
 
 def get_player_name(game_data):
-    return game_data["activePlayer"]["riotIdGameName"]
+    return game_data["activePlayer"]["summonerName"].split("#")[0]
 
 def get_champion_name(game_data, player_name):
     for player in game_data["allPlayers"]:
-        if player["riotIdGameName"] == player_name:
+        if player["summonerName"] == player_name:
             return player["championName"]
 
 def get_champion_id(champion_name):
@@ -174,25 +234,25 @@ def assisted_kill(game_data, player_name):
 
 def player_vision_score(game_data, player_name):
     for player in game_data["allPlayers"]:
-        if player["riotIdGameName"] == player_name:
+        if player["summonerName"] == player_name:
             return player["scores"]["wardScore"]
     return 0
 
 def player_creep_score(game_data, player_name):
     for player in game_data["allPlayers"]:
-        if player["riotIdGameName"] == player_name:
+        if player["summonerName"] == player_name:
             return player["scores"]["creepScore"]
     return 0
 
 def player_kills(game_data, player_name):
     for player in game_data["allPlayers"]:
-        if player["riotIdGameName"] == player_name:
+        if player["summonerName"] == player_name:
             return player["scores"]["kills"]
     return 0
 
 def player_assists(game_data, player_name):
     for player in game_data["allPlayers"]:
-        if player["riotIdGameName"] == player_name:
+        if player["summonerName"] == player_name:
             return player["scores"]["assists"]
     return 0
 
@@ -242,26 +302,30 @@ def send_locations(objectives_complete, champion_id):
 sg.theme('DarkAmber')
 layout = [  [
                 sg.Text('In Match: No', justification = 'center', key = "In Match Text"),
-                sg.Button('Check for Match', key = "Check for Match Button", disabled_button_color = "blue")
+                sg.Button('Check for Match', key = "Check for Match Button", disabled_button_color = "blue", expand_x = True, expand_y = True),
+                sg.Column(
+                [   [sg.Text('LP Progress', expand_x = True, expand_y = True, key = "LP_text")],
+                    [sg.ProgressBar(game_values["required_lp"], size = (40, 10), expand_x = True, key='LP_progress')]
+                ])
             ],
             [   
                 sg.Column(
                 [   [sg.Text("Champions Unlocked")],
                     [sg.Table(
                         [
-                        ], headings = ["Champion Name", "Champion ID"], key = "Champions Unlocked Table")]
-                ]),
+                        ], headings = ["Champion Name", "Champion ID"], key = "Champions Unlocked Table", enable_click_events=True, expand_x = True, expand_y = True)],
+                ], expand_x = True, expand_y = True),
                 sg.Column(
                 [
                     [sg.Text("Required Values")],
                     [sg.Table(
                         [
-                        ], headings = ["Value Type", "Value Amount"], key = "Values Table")]
-               ])
+                        ], headings = ["Value Type", "Value Amount"], key = "Values Table", auto_size_columns=True, expand_x = True, expand_y = True)]
+               ], expand_x = True, expand_y = True)
             ]
         ]
 
-window = sg.Window('LOL AP', layout)
+window = sg.Window('LOL AP', layout, resizable=True)
 while True:
     game_data = None
     event, values = window.read(timeout=2000)
@@ -272,9 +336,13 @@ while True:
     check_lp_for_victory(game_values)
     get_items(game_values)
     read_cfg(game_values)
-    display_champion_list(window)
+    champion_table_rows = display_champion_list(window)
     display_values(window, game_values)
     send_starting_champion_check()
+    window['LP_progress'].update(max=game_values["required_lp"], current_count=game_values["current_lp"])
+    window['LP_text'].update(value=(f"LP Progress ({game_values["current_lp"]}/{game_values["required_lp"]})"))
+    for i in range(0,9):
+        window["Values Table"].update(row_colors = [(i,'#2C2825')])
     if in_match:
         game_data = get_game_data()
     if game_data is None:
@@ -283,5 +351,17 @@ while True:
     else:
         window["In Match Text"].update("In Match: In Match")
         get_objectives_complete(game_data, game_values)
+    if event[0] == 'Champions Unlocked Table' or eventflag:
+        if event[2][0] == -1:
+            eventflag = False
+        else:
+            if event[0] == 'Champions Unlocked Table' and event[2][0] >= 0:
+                row, col = event[2]
+            eventflag = True
+            selected_row_data = champion_table_rows[row]
+            completed_checks = check_sent(selected_row_data[1])
+            no_check = check_checks(selected_row_data[1])
+            if completed_checks or no_check:
+                display_values_colours(window, game_values, completed_checks, no_check)
 
 window.close()

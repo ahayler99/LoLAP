@@ -23,6 +23,22 @@ class Champions(OptionSet):
     valid_keys = [champions[champion_id]["name"] for champion_id in champions]
     default = sorted(set([champions[champion_id]["name"] for champion_id in champions]))
 
+class ForcedChamps(OptionSet):
+    """
+    Which champs to forcibly include in the generated list (MUST BE LESS THAN Champion Subset Count!)
+    """
+    display_name = "ForcedChamps"
+    valid_keys = [champions[champion_id]["name"] for champion_id in champions]
+    default = []
+    
+class ForcedStartChamps(OptionSet):
+    """
+    Which champs to forcibly start with (MUST BE LESS THAN Starting Champions!)
+    """
+    display_name = "ForcedStartChamps"
+    valid_keys = [champions[champion_id]["name"] for champion_id in champions]
+    default = []
+
 class RequiredCreepScore(Range):
     """
     Required CS to complete CS checks
@@ -80,6 +96,8 @@ class ChampionSubsetCount(Range):
 @dataclass
 class LOLOptions(PerGameCommonOptions):
     champions: Champions
+    forced_champions: ForcedChamps
+    forced_starter_champions: ForcedStartChamps
     required_creep_score: RequiredCreepScore
     required_vision_score: RequiredVisionScore
     required_kills: RequiredKills
@@ -87,3 +105,4 @@ class LOLOptions(PerGameCommonOptions):
     required_lp: RequiredLPPercentage
     starting_champions: StartingChampions
     champion_subset_count: ChampionSubsetCount
+    

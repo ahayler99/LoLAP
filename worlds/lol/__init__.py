@@ -48,18 +48,22 @@ class LOLWorld(World):
     def __init__(self, multiworld: "MultiWorld", player: int):
         super(LOLWorld, self).__init__(multiworld, player)
         self.possible_champions = []
+        self.possible_champions1 = []
+        self.starting_champions = []
         self.added_lp = 0
 
     def create_items(self):
         item_pool: List[LOLItem] = []
         self.choose_possible_champions()
         print(self.possible_champions)
-        starting_champions = self.random.sample(self.possible_champions, min(self.options.starting_champions, len(self.possible_champions)))
-        for i in range(len(starting_champions)):
-            self.multiworld.get_location("Starting Champion " + str(i+1), self.player).place_locked_item(self.create_item(starting_champions[i]))
+        starter_count = min(self.options.starting_champions, len(self.possible_champions))
+        if  starter_count > len(self.starting_champions):
+            self.starting_champions += self.random.sample(self.possible_champions, (starter_count - len(self.starting_champions)))
+        for i in range(len(self.starting_champions)):
+            self.multiworld.get_location("Starting Champion " + str(i+1), self.player).place_locked_item(self.create_item(self.starting_champions[i]))
         total_locations = len(self.multiworld.get_unfilled_locations(self.player))
         for name, data in item_table.items():
-            if name in self.possible_champions and name not in starting_champions:
+            if name in self.possible_champions and name not in self.starting_champions:
                 item_pool += [self.create_item(name) for _ in range(0, 1)]
         while len(item_pool) < total_locations:
             item_pool.append(self.create_item("LP"))
@@ -91,7 +95,14 @@ class LOLWorld(World):
             print("Here")
             for champion_id in champions:
                 champion_name = champions[champion_id]["name"]
-                if champion_name in self.options.champions.value:
+                if champion_name in self.options.forced_champions:
                     self.possible_champions.append(champion_name)
-            if len(self.possible_champions) > self.options.champion_subset_count:
-                self.possible_champions = self.random.sample(self.possible_champions, self.options.champion_subset_count)
+                    if champion_name in self.options.forced_starter_champions:
+                        self.starting_champions.append(champion_name)
+                elif champion_name in self.options.champions.value:
+                    self.possible_champions1.append(champion_name)
+            num_random_champs = self.options.champion_subset_count - len(self.possible_champions)
+            print(num_random_champs)
+            if len(self.possible_champions1) > num_random_champs:
+                self.possible_champions += self.random.sample(self.possible_champions1, num_random_champs)
+            
